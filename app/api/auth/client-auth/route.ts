@@ -6,9 +6,9 @@ export async function POST(request: Request) {
   
   // This will be called from the client-side, so it should work
   const encodedParams = new URLSearchParams();
-  encodedParams.set('grant_type', 'password');
-  encodedParams.set('username', 'fhir_QfLlo');
-  encodedParams.set('password', '925X3LZ505');
+  encodedParams.set('grant_type', process.env.GRANT_TYPE!);
+  encodedParams.set('username', process.env.MODMED_USERNAME!);
+  encodedParams.set('password', process.env.MODMED_PASSWORD!);
 
   try {
     const response = await fetch('https://stage.ema-api.com/ema-dev/firm/apiportal/ema/ws/oauth2/grant', {
