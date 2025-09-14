@@ -1,4 +1,4 @@
-// lib/services/patient-service.ts
+// lib/services/patient-service.ts - Real FHIR version
 import { modMedClient, FHIRBundle } from '@/lib/api/modmed-client';
 import { FHIRPatient, PatientFormData, PatientSummary } from '@/types/fhir';
 
@@ -20,12 +20,14 @@ export class PatientService {
       if (params?.gender) queryParams.gender = params.gender;
       if (params?.active !== undefined) queryParams.active = params.active.toString();
 
+      console.log('🔍 Fetching patients from ModMed FHIR API...');
       const bundle = await modMedClient.get<FHIRBundle<FHIRPatient>>('/Patient', queryParams);
       
+      console.log(`✅ Retrieved ${bundle.entry?.length || 0} patients from API`);
       return (bundle.entry || []).map(entry => this.transformToSummary(entry.resource));
     } catch (error) {
       console.error('Failed to fetch patients:', error);
-      throw new Error('Unable to load patients. Please try again.');
+      throw new Error('Unable to load patients from ModMed API. Please try again.');
     }
   }
 
@@ -34,11 +36,12 @@ export class PatientService {
    */
   async getPatientById(id: string): Promise<FHIRPatient> {
     try {
+      console.log(`🔍 Fetching patient ${id} from ModMed FHIR API...`);
       const patient = await modMedClient.get<FHIRPatient>(`/Patient/${id}`);
       return patient;
     } catch (error) {
       console.error(`Failed to fetch patient ${id}:`, error);
-      throw new Error('Patient not found or unable to load patient details.');
+      throw new Error('Patient not found in ModMed API or unable to load patient details.');
     }
   }
 
@@ -47,12 +50,14 @@ export class PatientService {
    */
   async createPatient(patientData: PatientFormData): Promise<FHIRPatient> {
     try {
+      console.log('📝 Creating new patient in ModMed FHIR API...');
       const fhirPatient = this.transformToFHIR(patientData);
       const createdPatient = await modMedClient.post<FHIRPatient>('/Patient', fhirPatient);
+      console.log('✅ Patient created successfully');
       return createdPatient;
     } catch (error) {
       console.error('Failed to create patient:', error);
-      throw new Error('Unable to create patient. Please check your input and try again.');
+      throw new Error('Unable to create patient in ModMed API. Please check your input and try again.');
     }
   }
 
@@ -61,28 +66,29 @@ export class PatientService {
    */
   async updatePatient(id: string, patientData: PatientFormData): Promise<FHIRPatient> {
     try {
+      console.log(`📝 Updating patient ${id} in ModMed FHIR API...`);
       const fhirPatient = this.transformToFHIR(patientData);
       fhirPatient.id = id;
       const updatedPatient = await modMedClient.put<FHIRPatient>(`/Patient/${id}`, fhirPatient);
+      console.log('✅ Patient updated successfully');
       return updatedPatient;
     } catch (error) {
       console.error(`Failed to update patient ${id}:`, error);
-      throw new Error('Unable to update patient. Please try again.');
+      throw new Error('Unable to update patient in ModMed API. Please try again.');
     }
   }
 
   /**
-   * Delete patient (soft delete - set active: false)
+   * Delete patient
    */
   async deletePatient(id: string): Promise<void> {
     try {
-      // In FHIR, we typically soft delete by setting active: false
-      const patient = await this.getPatientById(id);
-      patient.active = false;
-      await modMedClient.put<FHIRPatient>(`/Patient/${id}`, patient);
+      console.log(`🗑️ Deleting patient ${id} from ModMed FHIR API...`);
+      await modMedClient.delete<void>(`/Patient/${id}`);
+      console.log('✅ Patient deleted successfully');
     } catch (error) {
       console.error(`Failed to delete patient ${id}:`, error);
-      throw new Error('Unable to delete patient. Please try again.');
+      throw new Error('Unable to delete patient from ModMed API. Please try again.');
     }
   }
 
@@ -91,6 +97,7 @@ export class PatientService {
    */
   async searchPatients(query: string): Promise<PatientSummary[]> {
     try {
+      console.log(`🔍 Searching patients for: "${query}"`);
       const params = {
         name: query,
         _count: 20
@@ -107,7 +114,7 @@ export class PatientService {
    */
   private transformToSummary(fhirPatient: FHIRPatient): PatientSummary {
     const name = fhirPatient.name?.[0];
-    const fullName = name ? `${name.given?.[0] || ''} ${name.family || ''}`.trim() : 'Unknown';
+    const fullName = name ? `${name.given?.join(' ') || ''} ${name.family || ''}`.trim() : 'Unknown';
     
     const phone = fhirPatient.telecom?.find(t => t.system === 'phone')?.value;
     const email = fhirPatient.telecom?.find(t => t.system === 'email')?.value;
@@ -146,71 +153,61 @@ export class PatientService {
       address: [
         {
           use: 'home',
-          type: 'physical',
+          type: 'both',
           line: [formData.address.line1],
           city: formData.address.city,
           state: formData.address.state,
           postalCode: formData.address.postalCode,
           country: formData.address.country
         }
-      ]
-    };
-
-    // Add optional fields
-    if (formData.address.line2) {
-      patient.address![0].line!.push(formData.address.line2);
-    }
-
-    if (formData.phone) {
-      patient.telecom!.push({
-        system: 'phone',
-        value: formData.phone,
-        use: 'home'
-      });
-    }
-
-    if (formData.email) {
-      patient.telecom!.push({
-        system: 'email',
-        value: formData.email
-      });
-    }
-
-    if (formData.medicalRecordNumber) {
-      patient.identifier = [
+      ],
+      deceasedBoolean: false,
+      extension: [
         {
-          use: 'official',
-          system: 'http://hospital.example.org/patients',
-          value: formData.medicalRecordNumber
-        }
-      ];
-    }
-
-    // Add emergency contact if provided
-    if (formData.emergencyContact) {
-      patient.contact = [
-        {
-          relationship: [
+          url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
+          extension: [
             {
-              text: formData.emergencyContact.relationship
-            }
-          ],
-          name: {
-            text: formData.emergencyContact.name
-          },
-          telecom: [
-            {
-              system: 'phone',
-              value: formData.emergencyContact.phone
+              url: "text",
+              valueString: "Unspecified"
             }
           ]
         }
-      ];
+      ]
+    };
+    // Add second address line if provided
+    if (formData.address.line2) {
+        patient.address![0].line!.push(formData.address.line2);
+      }
+  
+      // Add telecom if provided
+      if (formData.phone) {
+        patient.telecom!.push({
+          system: 'phone',
+          value: formData.phone,
+          use: 'mobile',
+          rank: 1
+        });
+      }
+  
+      if (formData.email) {
+        patient.telecom!.push({
+          system: 'email',
+          value: formData.email
+        });
+      }
+  
+      // Add identifier if medical record number provided
+      if (formData.medicalRecordNumber) {
+        patient.identifier = [
+          {
+            system: 'http://www.hl7.org/fhir/v2/0203/index.html#v2-0203-MR',
+            value: formData.medicalRecordNumber
+          }
+        ];
+      }
+  
+      return patient;
     }
-
-    return patient;
-  }
-
   /**
    * Transform FHIR Patient to form data
    */
@@ -219,7 +216,6 @@ export class PatientService {
     const address = fhirPatient.address?.[0];
     const phone = fhirPatient.telecom?.find(t => t.system === 'phone')?.value;
     const email = fhirPatient.telecom?.find(t => t.system === 'email')?.value;
-    const contact = fhirPatient.contact?.[0];
 
     return {
       id: fhirPatient.id,
@@ -237,12 +233,9 @@ export class PatientService {
         postalCode: address?.postalCode || '',
         country: address?.country || 'US'
       },
-      emergencyContact: contact ? {
-        name: contact.name?.text || '',
-        relationship: contact.relationship?.[0]?.text || '',
-        phone: contact.telecom?.find(t => t.system === 'phone')?.value || ''
-      } : undefined,
-      medicalRecordNumber: fhirPatient.identifier?.find(i => i.use === 'official')?.value,
+      medicalRecordNumber: fhirPatient.identifier?.find(
+        i => i.system === 'http://www.hl7.org/fhir/v2/0203/index.html#v2-0203-MR'
+      )?.value,
       active: fhirPatient.active !== false
     };
   }
@@ -264,5 +257,4 @@ export class PatientService {
   }
 }
 
-// Export singleton instance
 export const patientService = new PatientService();

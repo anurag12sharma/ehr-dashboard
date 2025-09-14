@@ -74,6 +74,8 @@ export interface FHIRHumanName {
     gender?: 'male' | 'female' | 'other' | 'unknown';
     birthDate?: string; // YYYY-MM-DD format
     deceased?: boolean | string;
+    deceasedBoolean?: boolean;
+    deceasedDateTime?: string;
     address?: FHIRAddress[];
     maritalStatus?: {
       coding?: Array<{
@@ -143,4 +145,221 @@ export interface FHIRHumanName {
     lastVisit?: string;
     active: boolean;
   }
+
+/**
+ * FHIR R4 Appointment Resource Types
+ */
+
+export interface FHIRAppointmentParticipant {
+    type?: Array<{
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    }>;
+    actor?: {
+      reference?: string;
+      display?: string;
+    };
+    required?: 'required' | 'optional' | 'information-only';
+    status: 'accepted' | 'declined' | 'tentative' | 'needs-action';
+    period?: {
+      start?: string;
+      end?: string;
+    };
+  }
+  
+  export interface FHIRAppointment {
+    resourceType: 'Appointment';
+    id?: string;
+    meta?: {
+      versionId?: string;
+      lastUpdated?: string;
+      profile?: string[];
+    };
+    identifier?: FHIRIdentifier[];
+    status: 'proposed' | 'pending' | 'booked' | 'arrived' | 'fulfilled' | 'cancelled' | 'noshow' | 'entered-in-error' | 'checked-in' | 'waitlist';
+    cancelationReason?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    serviceCategory?: Array<{
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    }>;
+    serviceType?: Array<{
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    }>;
+    specialty?: Array<{
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    }>;
+    appointmentType?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    reasonCode?: Array<{
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    }>;
+    reasonReference?: Array<{
+      reference?: string;
+      display?: string;
+    }>;
+    priority?: number;
+    description?: string;
+    supportingInformation?: Array<{
+      reference?: string;
+      display?: string;
+    }>;
+    start?: string; // dateTime
+    end?: string; // dateTime
+    minutesDuration?: number;
+    slot?: Array<{
+      reference?: string;
+    }>;
+    created?: string; // dateTime
+    comment?: string;
+    patientInstruction?: string;
+    basedOn?: Array<{
+      reference?: string;
+    }>;
+    participant: FHIRAppointmentParticipant[];
+    requestedPeriod?: Array<{
+      start?: string;
+      end?: string;
+    }>;
+  }
+  
+  /**
+   * Simplified Appointment for forms and UI
+   */
+  export interface AppointmentFormData {
+    id?: string;
+    patientId: string;
+    patientName?: string;
+    practitionerId?: string;
+    practitionerName?: string;
+    title: string;
+    description?: string;
+    appointmentType: 'checkup' | 'consultation' | 'follow-up' | 'procedure' | 'emergency' | 'other';
+    status: "booked" | "proposed" | "pending" | "arrived" | "fulfilled" | "cancelled" | "noshow" | "entered-in-error" | "checked-in" | "waitlist";
+    startDateTime: string;
+    endDateTime: string;
+    duration: number; // minutes
+    reason?: string;
+    notes?: string;
+    location?: string;
+    priority: 'routine' | 'urgent' | 'stat';
+    reminderSent?: boolean;
+  }
+  
+  /**
+   * Appointment list item for tables/cards
+   */
+  export interface AppointmentSummary {
+    id: string;
+    patientId: string;
+    patientName: string;
+    practitionerName?: string;
+    title: string;
+    appointmentType: string;
+    status: string;
+    startDateTime: string;
+    endDateTime: string;
+    duration: number;
+    location?: string;
+    priority: string;
+    isUpcoming: boolean;
+    isToday: boolean;
+  }
+  
+
+  // types/fhir.ts (add missing fields)
+
+export interface FHIRMeta {
+    lastUpdated?: string;
+    versionId?: string;
+    profile?: string[];
+  }
+  
+  export interface FHIRExtension {
+    url: string;
+    valueString?: string;
+    extension?: FHIRExtension[];
+  }
+  
+  export interface FHIRCoding {
+    system?: string;
+    code?: string;
+    display?: string;
+  }
+  
+  export interface FHIRCodeableConcept {
+    coding?: FHIRCoding[];
+    text?: string;
+  }
+  
+  export interface FHIRIdentifier {
+    use?: 'usual' | 'official' | 'temp' | 'secondary' | 'old';
+    system?: string;
+    value?: string;
+    type?: FHIRCodeableConcept;
+  }
+  
+  // Update FHIRPatient interface
+  export interface FHIRPatient {
+    resourceType: 'Patient';
+    id?: string;
+    meta?: FHIRMeta;
+    extension?: FHIRExtension[];
+    identifier?: FHIRIdentifier[];
+    active?: boolean;
+    name?: FHIRHumanName[];
+    telecom?: FHIRContactPoint[];
+    gender?: 'male' | 'female' | 'other' | 'unknown';
+    birthDate?: string;
+    deceasedBoolean?: boolean;
+    deceasedDateTime?: string;
+    address?: FHIRAddress[];
+    maritalStatus?: FHIRCodeableConcept;
+    contact?: FHIRPatientContact[];
+    communication?: Array<{
+      language: FHIRCodeableConcept;
+      preferred?: boolean;
+    }>;
+    generalPractitioner?: Array<{
+      reference?: string;
+      display?: string;
+    }>;
+  }
+  
+  // Keep all your existing interfaces (FHIRHumanName, etc.) the same
   
