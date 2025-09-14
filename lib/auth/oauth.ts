@@ -47,8 +47,8 @@ export class ModMedOAuth {
     const tokenData = {
       scope: "apiportal",
       token_type: "Bearer",
-      access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmaGlyX1FmTGxvIiwidXJsUHJlZml4IjoiYXBpcG9ydGFsIiwidmVuZG9yIjoiZmhpcl9RZkxsb0BhcGlwb3J0YWwiLCJpc3MiOiJtb2RtZWQiLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJwb2wiOiJjaGFuZ2VtZSIsImp0aSI6ImJhNzYxZjA3YWIzYjQwNWI5MzI4MWRlMGFjNGY1NzQzIn0.r_xmytwaq41Wk36pP-sYtLtd9O-uAASAuwuSaYW7MAU",
-      refresh_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmaGlyX1FmTGxvIiwidXJsUHJlZml4IjoiYXBpcG9ydGFsIiwiaXNzIjoibW9kbWVkIiwidG9rZW5UeXBlIjoicmVmcmVzaCIsImp0aSI6ImJmYjc4YmI5NmYzODRmZDY5ZTAxYzdiMDAzMDhjMGU5In0.IMTZJLyqQXal27po0CN4IlW3tYD9YXql_uuWjHeeXII"
+      access_token: process.env.ACCESS_TOKEN!,
+      refresh_token: process.env.REFRESH_TOKEN!
     };
 
     const expiresInMs = 3600 * 1000; // 1 hour
