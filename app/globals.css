@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #4776e6;
+  --secondary: #38b2ac;
+  --accent: #7f53ac;
+  --bg-main: #f5f7fa;
+  --border-card: #e2e8f0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Soft glass background for main content panels */
+.glass-panel {
+  @apply bg-white/70 rounded-2xl shadow-md border border-[var(--border-card)] backdrop-blur-md p-6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.card-hover {
+  @apply transition-transform transition-shadow duration-200 hover:shadow-lg hover:-translate-y-1;
+}
+
+.btn-main {
+  @apply px-5 py-2 rounded-lg bg-[var(--primary)] text-white font-bold shadow hover:bg-blue-700 transition-colors duration-200;
+}
+.btn-calm {
+  @apply px-5 py-2 rounded-lg bg-[var(--secondary)] text-white font-bold shadow hover:bg-emerald-700 transition-colors duration-200;
+}
+.btn-outline {
+  @apply px-5 py-2 rounded-lg bg-white border border-[var(--accent)] text-[var(--accent)] font-bold hover:bg-[var(--accent)] hover:text-white transition-colors duration-200;
+}
+
+.input-soft {
+  @apply w-full px-4 py-2 rounded-md border border-gray-200 focus:border-blue-400 bg-white/90 shadow-sm focus:ring-2 focus:ring-blue-200 transition-all duration-200 placeholder-gray-400;
+}
+.table-header {
+  @apply bg-gray-50 text-gray-700 font-semibold;
+}
+.table-row {
+  @apply hover:bg-blue-50 transition-colors duration-150;
+}
+.badge {
+  @apply inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700;
+}
+
+@layer utilities {
+  .fade-in {
+    animation: fadeInTop 0.6s cubic-bezier(0.5,1.4,0.5,1);
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @keyframes fadeInTop {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

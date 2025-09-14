@@ -31,18 +31,13 @@ export default function PatientsPage() {
     searchQuery: '',
   });
 
-  // Load patients on component mount
-  useEffect(() => {
-    loadPatients();
-  }, []);
+  useEffect(() => { loadPatients(); }, []);
 
   const loadPatients = async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      
       const response = await fetch('/api/patients');
       const result = await response.json();
-      
       if (result.success) {
         setState(prev => ({
           ...prev,
@@ -63,12 +58,10 @@ export default function PatientsPage() {
 
   const handleSearch = async (query: string) => {
     setState(prev => ({ ...prev, searchQuery: query, loading: true }));
-    
     try {
       if (query.trim()) {
         const response = await fetch(`/api/patients/search?q=${encodeURIComponent(query)}`);
         const result = await response.json();
-        
         if (result.success) {
           setState(prev => ({ ...prev, patients: result.data, loading: false }));
         } else {
@@ -93,9 +86,7 @@ export default function PatientsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patientData),
       });
-      
       const result = await response.json();
-      
       if (result.success) {
         await loadPatients();
         setState(prev => ({ ...prev, viewMode: 'list' }));
@@ -114,15 +105,12 @@ export default function PatientsPage() {
   const handleUpdatePatient = async (patientData: PatientFormData) => {
     try {
       if (!state.selectedPatient?.id) throw new Error('No patient selected');
-      
       const response = await fetch(`/api/patients/${state.selectedPatient.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patientData),
       });
-      
       const result = await response.json();
-      
       if (result.success) {
         await loadPatients();
         setState(prev => ({ ...prev, viewMode: 'list' }));
@@ -141,13 +129,8 @@ export default function PatientsPage() {
   const handleDeletePatient = async () => {
     try {
       if (!state.selectedPatient?.id) throw new Error('No patient selected');
-      
-      const response = await fetch(`/api/patients/${state.selectedPatient.id}`, {
-        method: 'DELETE',
-      });
-      
+      const response = await fetch(`/api/patients/${state.selectedPatient.id}`, { method: 'DELETE' });
       const result = await response.json();
-      
       if (result.success) {
         await loadPatients();
         setState(prev => ({
@@ -175,7 +158,6 @@ export default function PatientsPage() {
       viewMode: 'details',
     }));
   };
-
   const handleEditPatient = (patient: PatientSummary) => {
     setState(prev => ({
       ...prev,
@@ -183,7 +165,6 @@ export default function PatientsPage() {
       viewMode: 'edit',
     }));
   };
-
   const handleDeleteRequest = (patient: PatientSummary) => {
     setState(prev => ({
       ...prev,
@@ -191,7 +172,6 @@ export default function PatientsPage() {
       showDeleteModal: true,
     }));
   };
-
   const handleBackToList = () => {
     setState(prev => ({
       ...prev,
@@ -211,7 +191,6 @@ export default function PatientsPage() {
             onCancel={handleBackToList}
           />
         );
-        
       case 'edit':
         return (
           <PatientForm
@@ -221,7 +200,6 @@ export default function PatientsPage() {
             onCancel={handleBackToList}
           />
         );
-        
       case 'details':
         return (
           <PatientDetails
@@ -231,7 +209,6 @@ export default function PatientsPage() {
             onBack={handleBackToList}
           />
         );
-        
       default:
         return (
           <PatientList
@@ -249,60 +226,47 @@ export default function PatientsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="md:flex md:items-center md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">
-                {state.viewMode === 'create' && 'Create New Patient'}
-                {state.viewMode === 'edit' && 'Edit Patient'}
-                {state.viewMode === 'details' && 'Patient Details'}
-                {state.viewMode === 'list' && 'Patient Management'}
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                {state.viewMode === 'list' && `${state.patients.length} patient(s) found`}
-                {state.viewMode !== 'list' && 'Electronic Health Records System'}
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 fade-in">
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {state.viewMode === 'create' && 'Create New Patient'}
+            {state.viewMode === 'edit' && 'Edit Patient'}
+            {state.viewMode === 'details' && 'Patient Details'}
+            {state.viewMode === 'list' && 'Patient Management'}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {state.viewMode === 'list' && `${state.patients.length} patient(s) found`}
+            {state.viewMode !== 'list' && 'Electronic Health Records System'}
+          </p>
+        </div>
 
-          {/* Error Display */}
-          {state.error && (
-            <div className="mt-4 rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{state.error}</p>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      className="rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100"
-                      onClick={() => setState(prev => ({ ...prev, error: null }))}
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
+        {/* Error Display */}
+        {state.error && (
+          <div className="rounded-md bg-red-50 p-4 mb-4 max-w-xl mx-auto">
+            <div className="flex">
+              <svg className="h-5 w-5 text-red-400 mt-1 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <b className="text-red-700">Error:</b>
+                <div className="text-red-700">{state.error}</div>
+                <button
+                  type="button"
+                  className="mt-2 btn-outline text-sm"
+                  onClick={() => setState(prev => ({ ...prev, error: null }))}
+                >
+                  Dismiss
+                </button>
               </div>
             </div>
-          )}
-
-          {/* Main Content */}
-          <div className="mt-6">
-            {renderContent()}
           </div>
-        </div>
-      </div>
+        )}
 
+        {/* Main Content */}
+        <div>{renderContent()}</div>
+      </div>
       {/* Delete Confirmation Modal */}
       {state.showDeleteModal && state.selectedPatient && (
         <DeleteConfirmModal

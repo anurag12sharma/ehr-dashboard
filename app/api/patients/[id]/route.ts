@@ -6,9 +6,10 @@ import { PatientFormData } from '@/types/fhir';
 // GET /api/patients/[id] - Get patient by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
+    const { params } = context; 
     const patient = await patientService.getPatientById(params.id);
 
     return NextResponse.json({
@@ -18,6 +19,7 @@ export async function GET(
     });
 
   } catch (error) {
+    const { params } = context; 
     console.error(`GET /api/patients/${params.id} failed:`, error);
     return NextResponse.json({
       success: false,
