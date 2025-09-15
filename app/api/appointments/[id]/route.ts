@@ -109,7 +109,7 @@ export async function DELETE(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } =await context.params;
   try {
     const deleted = await databaseService.deleteAppointment(id);
 

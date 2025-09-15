@@ -1,4 +1,3 @@
-// app/dashboard/appointments/components/AppointmentModal.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -43,9 +42,9 @@ export function AppointmentModal({ mode, appointment, onClose, onSubmit }: Appoi
     loadPatients();
   }, []);
 
-  // Load appointment data for edit mode
+  // Load appointment data for edit/view mode
   useEffect(() => {
-    if (mode !== 'create' && appointment) {
+    if ((mode === 'edit' || mode === 'view') && appointment) {
       loadAppointmentData();
     } else {
       setFormData(initialFormData);
@@ -61,7 +60,7 @@ export function AppointmentModal({ mode, appointment, onClose, onSubmit }: Appoi
       if (result.success) {
         setPatients(result.data);
       }
-    } catch (error) {
+    } catch {
       // silent fail
     } finally {
       setLoadingPatients(false);
@@ -86,15 +85,15 @@ export function AppointmentModal({ mode, appointment, onClose, onSubmit }: Appoi
           practitionerName: practitioner?.actor?.display || 'Dr. Sarah Johnson',
           title: fhirAppointment.description || '',
           description: fhirAppointment.comment || '',
-          appointmentType: (fhirAppointment.appointmentType?.text as any) || 'checkup',
+          appointmentType: fhirAppointment.appointmentType?.coding?.[0]?.code || 'checkup',
           status: fhirAppointment.status,
           startDateTime: fhirAppointment.start || '',
           endDateTime: fhirAppointment.end || '',
           duration: fhirAppointment.minutesDuration || 30,
-          reason: fhirAppointment.reasonCode?.[0]?.text || '',
+          reason: fhirAppointment.reasonReference?.[0]?.display || '',
           notes: fhirAppointment.comment || '',
-          location: 'Room 101',
-          priority: 'routine',
+          location: fhirAppointment.location || 'Room 101',
+          priority: fhirAppointment.priority === 1 ? 'urgent' : 'routine',
         });
       }
     } catch {
@@ -155,242 +154,285 @@ export function AppointmentModal({ mode, appointment, onClose, onSubmit }: Appoi
 
   const formatDateTime = (dateTime: string) => {
     if (!dateTime) return '';
-    return new Date(dateTime).toISOString().slice(0, 16);
+    return new Date(dateTime).toLocaleString();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay with blur */}
-      <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+  const isView = mode === 'view';
 
-      <div className="relative z-10 w-full max-w-3xl glass-panel fade-in max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5">
-          <h3 className="text-xl font-bold text-gray-900">{getModalTitle()}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="px-8 pb-8 pt-5">
-          {(loadingAppointment || loadingPatients) ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="loading-spinner"></div>
-              <span className="ml-3 text-gray-500">Loading...</span>
+return (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    {/* Overlay with blur */}
+    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+    <div className="relative z-10 w-full max-w-3xl glass-panel fade-in max-h-[90vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5">
+        <h3 className="text-xl font-bold text-gray-900">{getModalTitle()}</h3>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+      </div>
+      <div className="px-8 pb-8 pt-5">
+        {(loadingAppointment || loadingPatients) ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="loading-spinner"></div>
+            <span className="ml-3 text-gray-500">Loading...</span>
+          </div>
+        ) : isView ? (
+          <div className="space-y-6 px-2 pb-2 pt-2">
+            {/* Read-only details */}
+            <div>
+              <div className="text-xs text-gray-500">Appointment Title</div>
+              <div className="font-medium text-gray-900">{formData.title}</div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {error && (
-                <div className="rounded-md bg-red-50 p-4 text-red-700 mb-4">{error}</div>
-              )}
-
-              {/* Patient & Practitioner */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Patient *
-                  </label>
-                  <select
-                    required
-                    disabled={mode === 'view'}
-                    value={formData.patientId}
-                    onChange={e => handleInputChange('patientId', e.target.value)}
-                    className="input-soft"
-                  >
-                    <option value="">Select a patient</option>
-                    {patients.map(p => (
-                      <option value={p.id} key={p.id}>{p.name} ({p.id})</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Doctor
-                  </label>
-                  <input
-                    type="text"
-                    disabled={mode === 'view'}
-                    value={formData.practitionerName}
-                    onChange={e => handleInputChange('practitionerName', e.target.value)}
-                    className="input-soft"
-                  />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <div className="text-xs text-gray-500">Patient</div>
+                <div className="font-medium text-gray-900">{formData.patientName}</div>
               </div>
-
-              {/* Title & Type */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Appointment Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={mode === 'view'}
-                    value={formData.title}
-                    onChange={e => handleInputChange('title', e.target.value)}
-                    placeholder="e.g., Annual Physical Checkup"
-                    className="input-soft"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Appointment Type
-                  </label>
-                  <select
-                    disabled={mode === 'view'}
-                    value={formData.appointmentType}
-                    onChange={e => handleInputChange('appointmentType', e.target.value)}
-                    className="input-soft"
-                  >
-                    <option value="checkup">Checkup</option>
-                    <option value="consultation">Consultation</option>
-                    <option value="follow-up">Follow-up</option>
-                    <option value="procedure">Procedure</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+              <div>
+                <div className="text-xs text-gray-500">Doctor</div>
+                <div className="font-medium text-gray-900">{formData.practitionerName}</div>
               </div>
-
-              {/* Status & Location */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Status
-                  </label>
-                  <select
-                    disabled={mode === 'view'}
-                    value={formData.status}
-                    onChange={e => handleInputChange('status', e.target.value)}
-                    className="input-soft"
-                  >
-                    <option value="booked">Booked</option>
-                    <option value="pending">Pending</option>
-                    <option value="arrived">Arrived</option>
-                    <option value="fulfilled">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="noshow">No Show</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    disabled={mode === 'view'}
-                    value={formData.location}
-                    onChange={e => handleInputChange('location', e.target.value)}
-                    placeholder="Room 101"
-                    className="input-soft"
-                  />
-                </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <div className="text-xs text-gray-500">Type</div>
+                <div className="font-medium text-gray-900">{formData.appointmentType}</div>
               </div>
-
-              {/* Date, Time, Duration */}
-              <div className="border-t border-gray-100 pt-5 -mx-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Start Date & Time *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    disabled={mode === 'view'}
-                    value={formatDateTime(formData.startDateTime)}
-                    onChange={e => handleInputChange('startDateTime', e.target.value)}
-                    className="input-soft"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Duration (min)
-                  </label>
-                  <select
-                    disabled={mode === 'view'}
-                    value={formData.duration}
-                    onChange={e => handleInputChange('duration', parseInt(e.target.value))}
-                    className="input-soft"
-                  >
-                    <option value={15}>15 min</option>
-                    <option value={30}>30 min</option>
-                    <option value={45}>45 min</option>
-                    <option value={60}>1 hour</option>
-                    <option value={90}>1.5 hours</option>
-                    <option value={120}>2 hours</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    End Date & Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    disabled
-                    value={formatDateTime(formData.endDateTime)}
-                    className="input-soft bg-gray-50 text-gray-400"
-                  />
-                  <p className="mt-1 text-xs text-gray-400">Auto-calculated</p>
-                </div>
+              <div>
+                <div className="text-xs text-gray-500">Status</div>
+                <div className="font-medium text-gray-900">{formData.status}</div>
               </div>
-
-              {/* Additional info */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Reason for Visit
-                  </label>
-                  <input
-                    type="text"
-                    disabled={mode === 'view'}
-                    value={formData.reason}
-                    onChange={e => handleInputChange('reason', e.target.value)}
-                    placeholder="e.g., Checkup"
-                    className="input-soft"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    Notes
-                  </label>
-                  <textarea
-                    rows={2}
-                    disabled={mode === 'view'}
-                    value={formData.notes}
-                    onChange={e => handleInputChange('notes', e.target.value)}
-                    className="input-soft"
-                  />
-                </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Date & Time</div>
+              <div className="font-medium text-gray-900">
+                {formatDateTime(formData.startDateTime)} – {formatDateTime(formData.endDateTime)}
               </div>
-
-              {/* Actions */}
-              {mode !== 'view' && (
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="btn-outline"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-main"
-                  >
-                    {loading
-                      ? (mode === 'create' ? 'Scheduling...' : 'Updating...')
-                      : (mode === 'create' ? 'Schedule Appointment' : 'Update Appointment')}
-                  </button>
-                </div>
-              )}
-            </form>
-          )}
-        </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Duration</div>
+              <div className="font-medium text-gray-900">{formData.duration} min</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Location</div>
+              <div className="font-medium text-gray-900">{formData.location}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Reason</div>
+              <div className="font-medium text-gray-900">{formData.reason}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Notes</div>
+              <div className="font-medium text-gray-900">{formData.notes}</div>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {error && (
+              <div className="rounded-md bg-red-50 p-4 text-red-700 mb-4">{error}</div>
+            )}
+            {/* Patient & Practitioner */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Patient *
+                </label>
+                <select
+                  required
+                  disabled={isView}
+                  value={formData.patientId}
+                  onChange={e => handleInputChange('patientId', e.target.value)}
+                  className="input-soft"
+                >
+                  <option value="">Select a patient</option>
+                  {patients.map(p => (
+                    <option value={p.id} key={p.id}>{p.name} ({p.id})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Doctor
+                </label>
+                <input
+                  type="text"
+                  disabled={isView}
+                  value={formData.practitionerName}
+                  onChange={e => handleInputChange('practitionerName', e.target.value)}
+                  className="input-soft"
+                />
+              </div>
+            </div>
+            {/* Title & Type */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Appointment Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  disabled={isView}
+                  value={formData.title}
+                  onChange={e => handleInputChange('title', e.target.value)}
+                  placeholder="e.g., Annual Physical Checkup"
+                  className="input-soft"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Appointment Type
+                </label>
+                <select
+                  disabled={isView}
+                  value={formData.appointmentType}
+                  onChange={e => handleInputChange('appointmentType', e.target.value)}
+                  className="input-soft"
+                >
+                  <option value="checkup">Checkup</option>
+                  <option value="consultation">Consultation</option>
+                  <option value="follow-up">Follow-up</option>
+                  <option value="procedure">Procedure</option>
+                  <option value="emergency">Emergency</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            {/* Status & Location */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Status
+                </label>
+                <select
+                  disabled={isView}
+                  value={formData.status}
+                  onChange={e => handleInputChange('status', e.target.value)}
+                  className="input-soft"
+                >
+                  <option value="booked">Booked</option>
+                  <option value="pending">Pending</option>
+                  <option value="arrived">Arrived</option>
+                  <option value="fulfilled">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="noshow">No Show</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  disabled={isView}
+                  value={formData.location}
+                  onChange={e => handleInputChange('location', e.target.value)}
+                  placeholder="Room 101"
+                  className="input-soft"
+                />
+              </div>
+            </div>
+            {/* Date, Time, Duration */}
+            <div className="border-t border-gray-100 pt-5 -mx-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Start Date & Time *
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  disabled={isView}
+                  value={formData.startDateTime ? new Date(formData.startDateTime).toISOString().slice(0,16) : ''}
+                  onChange={e => handleInputChange('startDateTime', e.target.value)}
+                  className="input-soft"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Duration (min)
+                </label>
+                <select
+                  disabled={isView}
+                  value={formData.duration}
+                  onChange={e => handleInputChange('duration', parseInt(e.target.value))}
+                  className="input-soft"
+                >
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours</option>
+                  <option value={120}>2 hours</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  End Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  disabled
+                  value={formData.endDateTime ? new Date(formData.endDateTime).toISOString().slice(0,16) : ''}
+                  className="input-soft bg-gray-50 text-gray-400"
+                />
+                <p className="mt-1 text-xs text-gray-400">Auto-calculated</p>
+              </div>
+            </div>
+            {/* Additional info */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Reason for Visit
+                </label>
+                <input
+                  type="text"
+                  disabled={isView}
+                  value={formData.reason}
+                  onChange={e => handleInputChange('reason', e.target.value)}
+                  placeholder="e.g., Checkup"
+                  className="input-soft"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Notes
+                </label>
+                <textarea
+                  rows={2}
+                  disabled={isView}
+                  value={formData.notes}
+                  onChange={e => handleInputChange('notes', e.target.value)}
+                  className="input-soft"
+                />
+              </div>
+            </div>
+            {/* Actions */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-main"
+              >
+                {loading
+                  ? (mode === 'create' ? 'Scheduling...' : 'Updating...')
+                  : (mode === 'create' ? 'Schedule Appointment' : 'Update Appointment')}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 }

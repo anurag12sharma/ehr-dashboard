@@ -1,4 +1,3 @@
-// app/dashboard/appointments/components/AppointmentCard.tsx
 'use client';
 
 import React from 'react';
@@ -60,105 +59,104 @@ export function AppointmentCard({ appointment, onView, onEdit, onDelete }: Appoi
 
   return (
     <div className={`
-  glass-panel card-hover rounded-2xl mb-5 px-0 pt-0 pb-2 shadow-xl border-0
-  transition-shadow duration-200
-  ${isToday ? 'ring-2 ring-blue-100' : ''}
-`}>
-  <div className="p-6">
-    {/* Header */}
-    <div className="flex items-start justify-between mb-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-gray-900 truncate">{appointment.title}</h3>
-          {getPriorityIcon(appointment.priority)}
-          {isToday && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm border border-blue-100">Today</span>
+      glass-panel card-hover rounded-2xl mb-5 px-0 pt-0 pb-2 shadow-xl border-0
+      transition-shadow duration-200
+      ${isToday ? 'ring-2 ring-blue-100' : ''}
+    `}>
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-gray-900 truncate">{appointment.title}</h3>
+              {getPriorityIcon(appointment.priority)}
+              {isToday && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm border border-blue-100">Today</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">ID: {appointment.id}</p>
+          </div>
+          <span className={
+            `inline-block rounded-xl px-3 py-1 text-xs font-medium shadow-sm bg-opacity-20
+            ${appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+            ${appointment.status === 'booked' ? 'bg-emerald-100 text-emerald-700' : ''}
+            ${appointment.status === 'fulfilled' ? 'bg-blue-100 text-blue-700' : ''}
+            ${appointment.status === 'cancelled' ? 'bg-red-100 text-red-600' : ''}
+            `
+          }>
+            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+          </span>
+        </div>
+
+        {/* Patient/Practitioner/Location */}
+        <div className="space-y-1 mt-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <UserIcon className="h-4 w-4 text-gray-400" />
+            {appointment.patientName}
+          </div>
+          {appointment.practitionerName && (
+            <div className="flex items-center gap-2 text-xs text-emerald-700 font-medium">
+              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+              {appointment.practitionerName}
+            </div>
+          )}
+          {appointment.location && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <MapPinIcon className="h-4 w-4 text-gray-400" />
+              {appointment.location}
+            </div>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-1">ID: {appointment.id}</p>
-      </div>
-      <span className={
-        `inline-block rounded-xl px-3 py-1 text-xs font-medium shadow-sm bg-opacity-20
-         ${appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-         ${appointment.status === 'booked' ? 'bg-emerald-100 text-emerald-700' : ''}
-         ${appointment.status === 'fulfilled' ? 'bg-blue-100 text-blue-700' : ''}
-         ${appointment.status === 'cancelled' ? 'bg-red-100 text-red-600' : ''}
-        `
-      }>
-        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-      </span>
-    </div>
 
-    {/* Patient/Practitioner/Location */}
-    <div className="space-y-1 mt-2">
-      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-        <UserIcon className="h-4 w-4 text-gray-400" />
-        {appointment.patientName}
-      </div>
-      {appointment.practitionerName && (
-        <div className="flex items-center gap-2 text-xs text-emerald-700 font-medium">
-          <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-          {appointment.practitionerName}
+        {/* Date and Time */}
+        <div className="mt-5 mb-2 p-3 bg-gray-50/75 rounded-xl flex flex-wrap gap-x-5 items-center">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarIcon className="h-4 w-4 text-blue-400" />
+            <span className="font-medium text-sm text-gray-900">{formatDate(appointment.startDateTime)}</span>
+          </div>
+          <div className="flex items-center gap-2 mb-1">
+            <ClockIcon className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs text-gray-700">
+              {formatTime(appointment.startDateTime)} — {formatTime(appointment.endDateTime)}
+            </span>
+          </div>
+          <div className="ml-auto text-xs text-gray-400">
+            Duration: {appointment.duration} min
+          </div>
         </div>
-      )}
-      {appointment.location && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <MapPinIcon className="h-4 w-4 text-gray-400" />
-          {appointment.location}
+
+        {/* Appointment Type */}
+        <div className="mt-1 mb-2">
+          <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium shadow-sm
+            ${getTypeColor(appointment.appointmentType)}`}>
+            {appointment.appointmentType.charAt(0).toUpperCase() + appointment.appointmentType.slice(1)}
+          </span>
         </div>
-      )}
-    </div>
 
-    {/* Date and Time */}
-    <div className="mt-5 mb-2 p-3 bg-gray-50/75 rounded-xl flex flex-wrap gap-x-5 items-center">
-      <div className="flex items-center gap-2 mb-1">
-        <CalendarIcon className="h-4 w-4 text-blue-400" />
-        <span className="font-medium text-sm text-gray-900">{formatDate(appointment.startDateTime)}</span>
+        {/* Actions */}
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={onView}
+            className="btn-outline flex-1 flex items-center justify-center gap-1"
+          >
+            <EyeIcon className="h-4 w-4" />
+            View
+          </button>
+          <button
+            onClick={onEdit}
+            className="btn-calm flex-1 flex items-center justify-center gap-1"
+          >
+            <PencilIcon className="h-4 w-4" />
+            Edit
+          </button>
+          <button
+            onClick={onDelete}
+            className="btn-danger flex items-center justify-center gap-1"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2 mb-1">
-        <ClockIcon className="h-4 w-4 text-emerald-400" />
-        <span className="text-xs text-gray-700">
-          {formatTime(appointment.startDateTime)} — {formatTime(appointment.endDateTime)}
-        </span>
-      </div>
-      <div className="ml-auto text-xs text-gray-400">
-        Duration: {appointment.duration} min
-      </div>
     </div>
-
-    {/* Appointment Type */}
-    <div className="mt-1 mb-2">
-      <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium shadow-sm
-        ${getTypeColor(appointment.appointmentType)}`}>
-        {appointment.appointmentType.charAt(0).toUpperCase() + appointment.appointmentType.slice(1)}
-      </span>
-    </div>
-
-    {/* Actions */}
-    <div className="mt-4 flex gap-2">
-      <button
-        onClick={onView}
-        className="btn-outline flex-1 flex items-center justify-center gap-1"
-      >
-        <EyeIcon className="h-4 w-4" />
-        View
-      </button>
-      <button
-        onClick={onEdit}
-        className="btn-calm flex-1 flex items-center justify-center gap-1"
-      >
-        <PencilIcon className="h-4 w-4" />
-        Edit
-      </button>
-      <button
-        onClick={onDelete}
-        className="btn-danger flex items-center justify-center gap-1"
-      >
-        <TrashIcon className="h-4 w-4" />
-      </button>
-    </div>
-  </div>
-</div>
-
   );
 }
