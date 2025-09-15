@@ -10,16 +10,13 @@ class DatabaseService {
 
   // Patient Methods
   async getPatients(params: {
-    filter?: any;    // <--- accepts a filter object for advanced Mongo query
+    filter?: any;
     search?: string; // legacy, not used now
     limit?: number;
     offset?: number;
   } = {}): Promise<IPatient[]> {
     await this.init();
-    
     const { filter = {}, limit = 50, offset = 0 } = params;
-
-    // If there's no filter, return all (cautiously; maybe limit rows)
     return Patient.find(filter)
       .limit(limit)
       .skip(offset)
@@ -29,6 +26,7 @@ class DatabaseService {
 
   async getPatientById(id: string): Promise<IPatient | null> {
     await this.init();
+    // Returns the full patient document (including demographics/history/allergies etc.)
     return Patient.findOne({ fhirId: id }).exec();
   }
 

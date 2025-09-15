@@ -1,5 +1,20 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+// ---- Types ----
+
+export interface IMedicalHistoryEntry {
+  condition: string;
+  diagnosisDate?: string;
+  notes?: string;
+}
+
+export interface IAllergyEntry {
+  substance: string;
+  reaction?: string;
+  severity?: string;
+  notes?: string;
+}
+
 export interface IPatient extends Document {
   fhirId: string;
   resourceType: string;
@@ -32,17 +47,35 @@ export interface IPatient extends Document {
   maritalStatus?: any;
   deceasedBoolean?: boolean;
   meta?: any;
+  // New/Extended fields
+  medicalHistory?: IMedicalHistoryEntry[];
+  allergies?: IAllergyEntry[];
   createdAt: Date;
   updatedAt: Date;
 }
 
+// ---- Schemas ----
+
 const AddressSchema = new Schema({
   use: String,
   type: String,
-  line: [String],          // ⬅️ this is the only correct way for FHIR "line"
+  line: [String],
   city: String,
   state: String,
   postalCode: String,
+}, { _id: false });
+
+const MedicalHistoryEntrySchema = new Schema({
+  condition: { type: String, required: true },
+  diagnosisDate: String,
+  notes: String,
+}, { _id: false });
+
+const AllergyEntrySchema = new Schema({
+  substance: { type: String, required: true },
+  reaction: String,
+  severity: String,
+  notes: String,
 }, { _id: false });
 
 const PatientSchema = new Schema<IPatient>({
@@ -61,7 +94,7 @@ const PatientSchema = new Schema<IPatient>({
   }],
   gender: { type: String, required: true },
   birthDate: { type: String, required: true },
-  address: [AddressSchema],         // ⬅️ this is correct: array of AddressSchema
+  address: [AddressSchema],
   identifier: [{
     system: { type: String, required: true },
     value: { type: String, required: true }
@@ -69,7 +102,10 @@ const PatientSchema = new Schema<IPatient>({
   extension: [Schema.Types.Mixed],
   maritalStatus: Schema.Types.Mixed,
   deceasedBoolean: Boolean,
-  meta: Schema.Types.Mixed
+  meta: Schema.Types.Mixed,
+  // --------- New extended fields for detailed view ----------
+  medicalHistory: [MedicalHistoryEntrySchema],
+  allergies: [AllergyEntrySchema],
 }, {
   timestamps: true
 });

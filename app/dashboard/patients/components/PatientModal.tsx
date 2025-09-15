@@ -6,7 +6,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface PatientModalProps {
   mode: 'create' | 'edit' | 'view';
-  patient: PatientSummary | null;
+  patient: any; // Accept any for extended details
   onClose: () => void;
   onSubmit: (data: PatientFormData) => Promise<{ success: boolean; error?: string }>;
 }
@@ -33,6 +33,9 @@ const initialFormData: PatientFormData = {
   },
   medicalRecordNumber: '',
   active: true,
+  // Add these lines if you support in form
+  //medicalHistory: [],
+  //allergies: [],
 };
 
 export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalProps) {
@@ -40,20 +43,19 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
+  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
+  const [allergies, setAllergies] = useState<any[]>([]);
 
   useEffect(() => {
-    // Only fetch data for edit or view, never for 'create'
-  if (mode === 'edit' || mode === 'view') {
-    if (patient) {
+    if ((mode === 'edit' || mode === 'view') && patient) {
       loadPatientData();
     }
-  }
-  if (mode === 'create') {
-    // Always wipe the form for "create"
-    setFormData(initialFormData);
-    setLoadingPatient(false);
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (mode === 'create') {
+      setFormData(initialFormData);
+      setMedicalHistory([]);
+      setAllergies([]);
+      setLoadingPatient(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, patient]);
 
@@ -63,22 +65,29 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
     try {
       const response = await fetch(`/api/patients/${patient.id}`);
       const result = await response.json();
-      if (result.success) {
-        // For view mode, just use the summary
-        setFormData((prev) => ({
+      if (result.success && result.data) {
+        const data = result.data;
+        setFormData(prev => ({
           ...prev,
-          id: result.data.id,
-          firstName: result.data.name.split(' ')[0] || '',
-          lastName: result.data.name.split(' ').slice(1).join(' ') || '',
-          email: result.data.email || '',
-          phone: result.data.phone || '',
-          gender: result.data.gender,
-          birthDate: result.data.birthDate,
+          id: data.fhirId || data.id || '',
+          firstName: (data.name && data.name.given && data.name.given[0]) || (typeof data.name === 'string' ? data.name.split(' ')[0] : ''),
+          lastName: (data.name && data.name.family) || (typeof data.name === 'string' ? data.name.split(' ').slice(1).join(' ') : ''),
+          email: data.telecom?.find((t: any) => t.system === 'email')?.value || data.email || '',
+          phone: data.telecom?.find((t: any) => t.system === 'phone')?.value || data.phone || '',
+          gender: data.gender || 'unknown',
+          birthDate: data.birthDate || '',
           address: {
-            ...prev.address,
+            line1: data.address?.[0]?.line?.[0] || '',
+            line2: data.address?.[0]?.line?.[1] || '',
+            city: data.address?.[0]?.city || '',
+            state: data.address?.[0]?.state || '',
+            postalCode: data.address?.[0]?.postalCode || '',
+            country: data.address?.[0]?.country || 'US',
           },
-          active: result.data.active ?? true,
+          active: typeof data.active === 'boolean' ? data.active : true,
         }));
+        setMedicalHistory(data.medicalHistory || []);
+        setAllergies(data.allergies || []);
       }
     } catch {
       setError('Failed to load patient data');
@@ -144,7 +153,7 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <div className="text-xs text-gray-500">Patient ID</div>
-                  <div className="font-medium text-gray-900">{patient.id}</div>
+                  <div className="font-medium text-gray-900">{patient.fhirId || patient.id}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">Status</div>
@@ -153,31 +162,82 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
               </div>
               <div>
                 <div className="text-xs text-gray-500">Name</div>
-                <div className="font-medium text-gray-900">{patient.name}</div>
+                <div className="font-medium text-gray-900">{formData.firstName} {formData.lastName}</div>
               </div>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <div className="text-xs text-gray-500">Gender</div>
-                  <div className="font-medium text-gray-900">{patient.gender}</div>
+                  <div className="font-medium text-gray-900">{formData.gender}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">Date of Birth</div>
-                  <div className="font-medium text-gray-900">{patient.birthDate}</div>
+                  <div className="font-medium text-gray-900">{formData.birthDate}</div>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <div className="text-xs text-gray-500">Email</div>
-                  <div className="font-medium text-gray-900">{patient.email || <span className="italic text-xs text-gray-400">Not provided</span>}</div>
+                  <div className="font-medium text-gray-900">{formData.email || <span className="italic text-xs text-gray-400">Not provided</span>}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">Phone</div>
-                  <div className="font-medium text-gray-900">{patient.phone || <span className="italic text-xs text-gray-400">Not provided</span>}</div>
+                  <div className="font-medium text-gray-900">{formData.phone || <span className="italic text-xs text-gray-400">Not provided</span>}</div>
                 </div>
               </div>
+
+              {/* Address */}
               <div>
-                <div className="text-xs text-gray-500">Age</div>
-                <div className="font-medium text-gray-900">{patient.age || <span className="italic text-xs text-gray-400">N/A</span>}</div>
+                <div className="text-xs text-gray-500">Address</div>
+                <div className="font-medium text-gray-900">
+                  {formData.address.line1}, {formData.address.city}, {formData.address.state} {formData.address.postalCode}
+                </div>
+              </div>
+
+              {/* Medical History */}
+              <div>
+                <div className="text-xs text-gray-500">Medical History</div>
+                {medicalHistory.length === 0 ? (
+                  <div className="italic text-xs text-gray-400">No history reported</div>
+                ) : (
+                  <ul className="list-disc ml-6 text-sm">
+                    {medicalHistory.map((entry, i) => (
+                      <li key={i}>
+                        <span className="font-semibold">{entry.condition}</span>
+                        {entry.diagnosisDate && (
+                          <span className="ml-2 text-xs text-gray-500">({entry.diagnosisDate})</span>
+                        )}
+                        {entry.notes && (
+                          <span className="ml-2 italic text-gray-600">{entry.notes}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Allergies */}
+              <div>
+                <div className="text-xs text-gray-500">Allergies</div>
+                {allergies.length === 0 ? (
+                  <div className="italic text-xs text-gray-400">No allergies reported</div>
+                ) : (
+                  <ul className="list-disc ml-6 text-sm">
+                    {allergies.map((entry, i) => (
+                      <li key={i}>
+                        <span className="font-semibold">{entry.substance}</span>
+                        {entry.reaction && (
+                          <span className="ml-2 text-xs text-red-600">Reaction: {entry.reaction}</span>
+                        )}
+                        {entry.severity && (
+                          <span className="ml-2 text-xs text-yellow-700">Severity: {entry.severity}</span>
+                        )}
+                        {entry.notes && (
+                          <span className="ml-2 italic text-gray-600">{entry.notes}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           ) : (

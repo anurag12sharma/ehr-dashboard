@@ -2,6 +2,7 @@ import { PatientSummary, AppointmentSummary } from '@/types/fhir';
 import { IPatient } from '@/lib/models/Patient';
 import { IAppointment } from '@/lib/models/Appointment';
 
+// ------------------- Patient summary for rows/cards -------------------
 export function transformPatientToSummary(patient: IPatient): PatientSummary {
   const primaryName = patient.name?.[0] || { family: '', given: [] };
   const primaryPhone = patient.telecom?.find(t => t.system === 'phone')?.value || '';
@@ -21,6 +22,28 @@ export function transformPatientToSummary(patient: IPatient): PatientSummary {
   };
 }
 
+// ------------------- Patient FULL detail (demographics, history, allergies, etc) -------------------
+export function transformPatientToDetail(patient: IPatient) {
+  // Compose a detail view object from all available properties
+  const summary = transformPatientToSummary(patient);
+
+  return {
+    ...summary,
+    id: patient.fhirId || (patient as any).id || '',
+    identifiers: patient.identifier || [],
+    address: patient.address?.[0] || {},
+    maritalStatus: patient.maritalStatus || null,
+    deceasedBoolean: patient.deceasedBoolean || false,
+    meta: patient.meta || null,
+    extension: patient.extension || [],
+    medicalHistory: patient.medicalHistory || [],
+    allergies: patient.allergies || [],
+    createdAt: patient.createdAt,
+    updatedAt: patient.updatedAt,
+  };
+}
+
+// ------------------- Appointment summary -------------------
 export function transformAppointmentToSummary(appointment: IAppointment): AppointmentSummary {
   const patient = appointment.participant?.find(p => p.actor?.reference?.includes('Patient'));
   const practitioner = appointment.participant?.find(p => p.actor?.reference?.includes('Practitioner'));
@@ -95,7 +118,10 @@ export function transformPatientFormToDatabase(formData: any): Partial<IPatient>
     identifier: [{
       system: 'PMS',
       value: formData.id || `patient-${Date.now()}`
-    }]
+    }],
+    // Support for extended detail:
+    medicalHistory: formData.medicalHistory || [],
+    allergies: formData.allergies || [],
   };
 }
 
