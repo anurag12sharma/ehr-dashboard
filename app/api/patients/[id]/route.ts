@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { databaseService } from '@/lib/services/database-service';
-// Optionally: import { transformPatientToDetail } from '@/lib/transformers/database-transformers';
+import { transformPatientFormToDatabase } from '@/lib/transformers/database-transformers';
 
 export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } =await context.params;
   try {
     const patient = await databaseService.getPatientById(id);
 
@@ -18,7 +18,6 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // If you want to format patient with a transformer, replace patient below with transformPatientToDetail(patient)
     return NextResponse.json({
       success: true,
       data: patient,
@@ -34,4 +33,38 @@ export async function GET(
   }
 }
 
-// Add PUT and DELETE handlers below if needed for full REST support
+export async function PUT(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
+  try {
+    const body = await request.json();
+    // Convert incoming form data into database fields (name, telecom, address, etc.)
+    const updateData = transformPatientFormToDatabase(body);
+
+    const updatedPatient = await databaseService.updatePatient(id, updateData);
+
+    if (!updatedPatient) {
+      return NextResponse.json({
+        success: false,
+        error: 'Patient not found',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedPatient,
+      message: 'Patient updated successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error(`PUT /api/patients/${id} failed:`, error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update patient',
+      timestamp: new Date().toISOString(),
+    }, { status: 500 });
+  }
+}

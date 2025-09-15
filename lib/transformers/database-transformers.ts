@@ -24,9 +24,7 @@ export function transformPatientToSummary(patient: IPatient): PatientSummary {
 
 // ------------------- Patient FULL detail (demographics, history, allergies, etc) -------------------
 export function transformPatientToDetail(patient: IPatient) {
-  // Compose a detail view object from all available properties
   const summary = transformPatientToSummary(patient);
-
   return {
     ...summary,
     id: patient.fhirId || (patient as any).id || '',
@@ -85,14 +83,20 @@ function calculateAge(birthDate: string): number {
   return age;
 }
 
+// --------------- Main update (create/edit) DB transformer ---------------
 export function transformPatientFormToDatabase(formData: any): Partial<IPatient> {
+  // Maps patient form data to database-ready shape, for PUT and POST
   return {
     fhirId: formData.id || `patient-${Date.now()}`,
     active: formData.active ?? true,
+    // ----- Demographic -----
     name: [{
-      family: formData.lastName || formData.name?.split(' ').pop() || '',
-      given: [formData.firstName || formData.name?.split(' ')[0] || '']
+      family: formData.lastName || '',
+      given: [formData.firstName || '']
     }],
+    gender: formData.gender || 'unknown',
+    birthDate: formData.birthDate || '',
+    // ----- Contact -----
     telecom: [
       ...(formData.phone ? [{
         system: 'phone',
@@ -105,15 +109,17 @@ export function transformPatientFormToDatabase(formData: any): Partial<IPatient>
         value: formData.email
       }] : [])
     ],
-    gender: formData.gender || 'unknown',
-    birthDate: formData.birthDate || '',
     address: formData.address ? [{
       use: 'home',
       type: 'both',
-      line: [formData.address.line1 || ''],
+      line: [
+        formData.address.line1 || '',
+        ...(formData.address.line2 ? [formData.address.line2] : [])
+      ],
       city: formData.address.city || '',
       state: formData.address.state || '',
-      postalCode: formData.address.postalCode || ''
+      postalCode: formData.address.postalCode || '',
+      country: formData.address.country || ''
     }] : [],
     identifier: [{
       system: 'PMS',

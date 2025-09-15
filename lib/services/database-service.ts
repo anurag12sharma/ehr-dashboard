@@ -26,7 +26,6 @@ class DatabaseService {
 
   async getPatientById(id: string): Promise<IPatient | null> {
     await this.init();
-    // Returns the full patient document (including demographics/history/allergies etc.)
     return Patient.findOne({ fhirId: id }).exec();
   }
 
@@ -36,6 +35,7 @@ class DatabaseService {
     return patient.save();
   }
 
+  // Patient UPDATE - used by the API PUT handler
   async updatePatient(id: string, patientData: Partial<IPatient>): Promise<IPatient | null> {
     await this.init();
     return Patient.findOneAndUpdate(

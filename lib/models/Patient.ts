@@ -19,18 +19,20 @@ export interface IPatient extends Document {
   fhirId: string;
   resourceType: string;
   active: boolean;
+  // --- Demographics ---
   name: {
     family: string;
     given: string[];
   }[];
+  gender: string;
+  birthDate: string;
+  // --- Contact ---
   telecom: {
     system: string;
     value: string;
     use?: string;
     rank?: number;
   }[];
-  gender: string;
-  birthDate: string;
   address: {
     use?: string;
     type?: string;
@@ -38,7 +40,9 @@ export interface IPatient extends Document {
     city?: string;
     state?: string;
     postalCode?: string;
+    country?: string;    
   }[];
+  // --- System/ID ---
   identifier: {
     system: string;
     value: string;
@@ -47,7 +51,6 @@ export interface IPatient extends Document {
   maritalStatus?: any;
   deceasedBoolean?: boolean;
   meta?: any;
-  // New/Extended fields
   medicalHistory?: IMedicalHistoryEntry[];
   allergies?: IAllergyEntry[];
   createdAt: Date;
@@ -62,6 +65,7 @@ const AddressSchema = new Schema({
   line: [String],
   city: String,
   state: String,
+  country: String,  
   postalCode: String,
 }, { _id: false });
 
@@ -82,19 +86,22 @@ const PatientSchema = new Schema<IPatient>({
   fhirId: { type: String, required: true, unique: true },
   resourceType: { type: String, default: 'Patient' },
   active: { type: Boolean, default: true },
+  // --- Demographics ---
   name: [{
     family: { type: String, required: true },
     given: [String]
   }],
+  gender: { type: String, required: true },
+  birthDate: { type: String, required: true },
+  // --- Contact ---
   telecom: [{
-    system: { type: String, required: true },
+    system: { type: String, required: true },  // 'phone', 'email', etc.
     value: { type: String, required: true },
     use: String,
     rank: Number
   }],
-  gender: { type: String, required: true },
-  birthDate: { type: String, required: true },
   address: [AddressSchema],
+  // --- System/ID ---
   identifier: [{
     system: { type: String, required: true },
     value: { type: String, required: true }
@@ -103,7 +110,7 @@ const PatientSchema = new Schema<IPatient>({
   maritalStatus: Schema.Types.Mixed,
   deceasedBoolean: Boolean,
   meta: Schema.Types.Mixed,
-  // --------- New extended fields for detailed view ----------
+  // --- Extended fields ---
   medicalHistory: [MedicalHistoryEntrySchema],
   allergies: [AllergyEntrySchema],
 }, {

@@ -60,6 +60,7 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
         const address = patient.address?.[0];
         const phone = patient.telecom?.find((t: any) => t.system === 'phone')?.value;
         const email = patient.telecom?.find((t: any) => t.system === 'email')?.value;
+        
 
         setFormData({
           id: patient.id,
