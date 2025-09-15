@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EHR Integration Dashboard
+<img width="1940" height="1336" alt="image" src="https://github.com/user-attachments/assets/ece7d92c-aa78-4767-82e2-608e438007a4" />
 
-## Getting Started
+>A comprehensive Electronic Health Records (EHR) integration dashboard built with Next.js, designed to streamline healthcare workflow management through intuitive CRUD operations and API integrations.
 
-First, run the development server:
+## Project Objective
+
+This project demonstrates the development of a modern healthcare dashboard that integrates with EHR systems to provide healthcare professionals with efficient tools for patient management, appointment scheduling, and clinical documentation.
+
+## Key Features & Requirements
+
+### Core CRUD Workflows
+- **Patient Management**
+  - Create, read, update, and delete patient records
+  - Search and filter patient database
+  - Patient profile management with medical history
+
+- **Appointment Scheduling**
+  - Schedule, modify, and cancel appointments
+  - Calendar view with availability management
+  - Automated appointment reminders
+
+- **Clinical Notes**
+  - Create and edit clinical documentation
+  - Secure storage and retrieval of medical records
+
+## Screenshots
+><img width="1940" height="1336" alt="image" src="https://github.com/user-attachments/assets/49b9a524-d7e6-4982-bfc0-38dc64eaec64" />
+><img width="1940" height="1336" alt="image" src="https://github.com/user-attachments/assets/486a7341-e202-4254-9bdd-872fa7fb66b1" />
+><img width="1940" height="1336" alt="image" src="https://github.com/user-attachments/assets/8a2c6459-2a65-4bb4-9b57-54f898cdf632" />
+><img width="1940" height="1336" alt="image" src="https://github.com/user-attachments/assets/da5df59e-e4ff-4bba-b5d1-f77fc24c64cc" />
+
+## Tech-Stack
+
+- **Frontend**: Next.js (React framework)
+- **API Integration**: RESTful APIs for EHR system connectivity
+- **Styling**: Modern CSS/Tailwind CSS
+- **Database**: Compatible with major EHR database systems
+- **Authentication**: Secure user authentication and authorization
+
+## Quickstart
 
 ```bash
+# Clone the repository
+git clone https://github.com/anurag12sharma/ehr-dashboard.git
+
+# Install dependencies
+cd ehr-dashboard
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Configure your EHR API credentials
+
+# Run the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
