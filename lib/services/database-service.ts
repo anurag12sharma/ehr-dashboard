@@ -11,7 +11,7 @@ class DatabaseService {
   // Patient Methods
   async getPatients(params: {
     filter?: any;
-    search?: string; // legacy, not used now
+    search?: string;
     limit?: number;
     offset?: number;
   } = {}): Promise<IPatient[]> {
@@ -35,7 +35,6 @@ class DatabaseService {
     return patient.save();
   }
 
-  // Patient UPDATE - used by the API PUT handler
   async updatePatient(id: string, patientData: Partial<IPatient>): Promise<IPatient | null> {
     await this.init();
     return Patient.findOneAndUpdate(
@@ -51,25 +50,46 @@ class DatabaseService {
     return result !== null;
   }
 
-  // Appointment Methods (unchanged)
+  // ---- Appointment Methods ----
   async getAppointments(params: {
     startDate?: string;
     endDate?: string;
     patientId?: string;
+    providerId?: string;
     limit?: number;
     offset?: number;
   } = {}): Promise<IAppointment[]> {
     await this.init();
-    const { startDate, endDate, patientId, limit = 50, offset = 0 } = params;
+    const { startDate, endDate, patientId, providerId, limit = 50, offset = 0 } = params;
     let query: any = {};
+
+    // Date filtering
     if (startDate || endDate) {
       query.start = {};
       if (startDate) query.start.$gte = new Date(startDate).toISOString();
       if (endDate) query.start.$lte = new Date(endDate).toISOString();
     }
+
+    // Patient filtering
     if (patientId) {
-      query['participant.actor.reference'] = { $regex: patientId, $options: 'i' };
+      query['participant.actor.reference'] = { $regex: `Patient/${patientId}`, $options: 'i' };
     }
+    // Provider filtering (matches any participant.actor.reference e.g. "Practitioner/123")
+    if (providerId) {
+      if (!query['participant.actor.reference']) query['participant.actor.reference'] = {};
+      // If already a regex (patient filtering present), turn both into $or clause
+      if (query['participant.actor.reference'].$regex) {
+        const prevRegex = query['participant.actor.reference'].$regex;
+        query.$or = [
+          { 'participant.actor.reference': { $regex: prevRegex, $options: 'i' } },
+          { 'participant.actor.reference': { $regex: `Practitioner/${providerId}`, $options: 'i' } }
+        ];
+        delete query['participant.actor.reference'];
+      } else {
+        query['participant.actor.reference'] = { $regex: `Practitioner/${providerId}`, $options: 'i' };
+      }
+    }
+
     return Appointment.find(query)
       .limit(limit)
       .skip(offset)
@@ -101,6 +121,36 @@ class DatabaseService {
     await this.init();
     const result = await Appointment.findOneAndDelete({ fhirId: id }).exec();
     return result !== null;
+  }
+
+  /**
+   * Find a single overlapping appointment for any participant (provider, patient),
+   * within [start, end]. Excludes appointment with excludeId (used when rescheduling).
+   * Returns the conflicting appointment if found, or null.
+   */
+  async findConflictingAppointment(
+    participants: any[],
+    startIso: string,
+    endIso: string,
+    excludeId?: string
+  ): Promise<IAppointment | null> {
+    await this.init();
+    if (!participants || !startIso || !endIso) return null;
+    // Check for overlap: (existing.start < newEnd && existing.end > newStart)
+    const providerRefs = participants
+      .filter(p => p.actor?.reference?.startsWith('Practitioner/'))
+      .map(p => p.actor.reference);
+    if (providerRefs.length === 0) return null; // Can't conflict if no provider
+
+    const query: any = {
+      'participant.actor.reference': { $in: providerRefs },
+      start: { $lt: endIso },
+      end: { $gt: startIso },
+    };
+    if (excludeId) {
+      query.fhirId = { $ne: excludeId };
+    }
+    return Appointment.findOne(query).exec();
   }
 
   // Utility Methods

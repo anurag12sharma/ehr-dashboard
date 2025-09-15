@@ -68,3 +68,29 @@ export async function PUT(
     }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } =await context.params;
+  try {
+    const deleted = await databaseService.deletePatient(id);
+
+    if (!deleted) {
+      return NextResponse.json({
+        success: false,
+        error: 'Patient not found',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Patient deleted successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error(`DELETE /api/patients/${id} failed:`, error);
+  }
+}

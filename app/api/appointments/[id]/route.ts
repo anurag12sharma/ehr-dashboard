@@ -6,10 +6,10 @@ export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
-  const { id } = await context.params;
+  const { id } =await context.params;
   try {
     const appointment = await databaseService.getAppointmentById(id);
-    
+
     if (!appointment) {
       return NextResponse.json({
         success: false,
@@ -33,6 +33,7 @@ export async function GET(
   }
 }
 
+// --- Robust PUT: with provider/patient conflict/overlap check before update ---
 export async function PUT(
   request: NextRequest,
   context: { params: { id: string } }
@@ -41,9 +42,45 @@ export async function PUT(
   try {
     const formData = await request.json();
     const updateData = transformAppointmentFormToDatabase(formData);
-    
+
+    // Get the previous appointment details (so we don't treat this appt as a conflict with itself)
+    const originalAppt = await databaseService.getAppointmentById(id);
+
+    // Only perform overlap check if timing/provider has actually changed
+    let conflict = null;
+    if (
+      updateData.start !== originalAppt?.start ||
+      updateData.end !== originalAppt?.end ||
+      JSON.stringify(updateData.participant) !== JSON.stringify(originalAppt?.participant)
+    ) {
+      if (!updateData.start || !updateData.end) {
+        return NextResponse.json({
+          success: false,
+          error: 'Missing start or end date/time for appointment.',
+          timestamp: new Date().toISOString(),
+        }, { status: 400 });
+      }
+      const participants = Array.isArray(updateData.participant) ? updateData.participant : [];
+      conflict = await databaseService.findConflictingAppointment(
+        participants,
+        updateData.start,
+        updateData.end,
+        id // Pass id to exclude current appointment
+      );
+
+    }
+
+    if (conflict) {
+      return NextResponse.json({
+        success: false,
+        error: 'Conflicting appointment exists at this time.',
+        conflict,
+        timestamp: new Date().toISOString(),
+      }, { status: 409 });
+    }
+
     const appointment = await databaseService.updateAppointment(id, updateData);
-    
+
     if (!appointment) {
       return NextResponse.json({
         success: false,
@@ -75,7 +112,7 @@ export async function DELETE(
   const { id } = context.params;
   try {
     const deleted = await databaseService.deleteAppointment(id);
-    
+
     if (!deleted) {
       return NextResponse.json({
         success: false,
