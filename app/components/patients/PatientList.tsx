@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { PatientSummary } from '@/types/fhir';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface PatientListProps {
   patients: PatientSummary[];
@@ -54,48 +55,7 @@ export function PatientList({
 
   return (
     <div className="space-y-6 fade-in">
-      {/* Search and Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg">
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Search patients by name..."
-              value={localSearchQuery}
-              onChange={e => setLocalSearchQuery(e.target.value)}
-              className="input-soft pl-10"
-            />
-            {localSearchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setLocalSearchQuery('');
-                  onSearch('');
-                }}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </form>
-        <button
-          onClick={onCreateNew}
-          className="btn-main flex items-center gap-2"
-        >
-          <svg className="-ml-0.5 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-          </svg>
-          Add New Patient
-        </button>
-      </div>
+      
 
       {/* Patient Table */}
       {patients.length === 0 ? (
@@ -167,28 +127,6 @@ export function PatientList({
                     )}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(patient.active)}</td>
-                  <td className="px-6 py-4 text-right whitespace-nowrap">
-                    <div className="flex gap-1 justify-end opacity-80 group-hover:opacity-100 transition-all">
-                      <button
-                        onClick={() => onViewDetails(patient)}
-                        className="text-blue-600 hover:text-blue-900 font-semibold px-2"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => onEdit(patient)}
-                        className="text-emerald-600 hover:text-emerald-900 font-semibold px-2"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDelete(patient)}
-                        className="text-red-600 hover:text-red-900 font-semibold px-2"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>

@@ -72,6 +72,7 @@ export interface FHIRHumanName {
     name?: FHIRHumanName[];
     telecom?: FHIRContactPoint[];
     gender?: 'male' | 'female' | 'other' | 'unknown';
+    age?:string;
     birthDate?: string; // YYYY-MM-DD format
     deceased?: boolean | string;
     deceasedBoolean?: boolean;

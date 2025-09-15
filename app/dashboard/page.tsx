@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +9,7 @@ import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardStats {
@@ -17,6 +17,16 @@ interface DashboardStats {
   todaysAppointments: number;
   upcomingAppointments: number;
   pendingAppointments: number;
+}
+
+interface PatientSearchResult {
+  id: string;
+  name: string;
+  gender: string;
+  birthDate: string;
+  phone?: string;
+  email?: string;
+  active?: boolean;
 }
 
 export default function DashboardPage() {
@@ -28,6 +38,12 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Patient Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<PatientSearchResult[] | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   useEffect(() => {
     loadDashboardStats();
   }, []);
@@ -36,48 +52,51 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      // Load patients count
-      const patientsResponse = await fetch('/api/patients');
-      const patientsResult = await patientsResponse.json();
+      // Load stats from your custom stats endpoint!
+      const res = await fetch('/api/dashboard/stats');
+      const statsResult = await res.json();
 
-      // Load appointments
-      const appointmentsResponse = await fetch('/api/appointments');
-      const appointmentsResult = await appointmentsResponse.json();
-
-      if (patientsResult.success && appointmentsResult.success) {
-        const patients = patientsResult.data;
-        const appointments = appointmentsResult.data;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const todaysAppointments = appointments.filter((apt: any) => {
-          const aptDate = new Date(apt.startDateTime);
-          return aptDate >= today && aptDate < tomorrow;
-        }).length;
-
-        const upcomingAppointments = appointments.filter((apt: any) => {
-          const aptDate = new Date(apt.startDateTime);
-          return aptDate > new Date();
-        }).length;
-
-        const pendingAppointments = appointments.filter(
-          (apt: any) => apt.status === 'pending'
-        ).length;
-
+      if (statsResult.success) {
         setStats({
-          totalPatients: patients.length,
-          todaysAppointments,
-          upcomingAppointments,
-          pendingAppointments,
+          totalPatients: statsResult.data.totalPatients,
+          todaysAppointments: statsResult.data.todaysAppointments,
+          upcomingAppointments: statsResult.data.upcomingAppointments,
+          pendingAppointments: statsResult.data.pendingAppointments,
         });
       }
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handler for searching patients
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    setSearching(true);
+    setSearchResults(null);
+    setSearchError(null);
+
+    try {
+      // You can search by name, fhirId, identifier, etc. (using `q` covers all)
+      const url = `/api/patients?q=${encodeURIComponent(searchTerm.trim())}&limit=10`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.success) {
+        setSearchResults(json.data);
+        setSearchError(null);
+      } else {
+        setSearchResults([]);
+        setSearchError(json.error || 'No patients found');
+      }
+    } catch (err) {
+      setSearchResults([]);
+      setSearchError('Error searching for patients');
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -113,9 +132,57 @@ export default function DashboardPage() {
         <p className="text-sm text-gray-500">Welcome to your EHR management system</p>
       </div>
 
+      {/* Patient Search */}
+      {/* <form className="max-w-2xl mx-auto flex gap-2 mb-4" onSubmit={handleSearch}>
+        <input
+          className="form-input border px-3 py-2 rounded-md w-full"
+          placeholder="Search patients by name, ID, phone, or identifier"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          autoFocus
+        />
+        <button
+          className="btn btn-primary flex items-center gap-2 px-4 py-2 rounded"
+          type="submit"
+          disabled={searching}
+        >
+          <MagnifyingGlassIcon className="h-5 w-5" />
+          {searching ? "Searching..." : "Search"}
+        </button>
+      </form> */}
+
+      {searchResults && (
+        <div className="glass-panel mb-6">
+          <h2 className="font-semibold text-lg mb-2">Search Results</h2>
+          {searchResults.length === 0 && (
+            <div className="text-sm text-gray-500">No patients found for "{searchTerm}"</div>
+          )}
+          <ul>
+            {searchResults.map(patient => (
+              <li key={patient.id} className="p-2 border-b last:border-b-0 flex justify-between items-center">
+                <div>
+                  <span className="font-medium">{patient.name}</span>
+                  <span className="ml-3 text-sm text-gray-500">{patient.gender}, {patient.birthDate}</span>
+                  {patient.phone && (
+                    <span className="ml-3 text-xs text-gray-600">📞 {patient.phone}</span>
+                  )}
+                </div>
+                <Link href={`/dashboard/patients/${patient.id}`} className="text-blue-600 underline text-xs">
+                  View
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {searchError && (
+        <div className="glass-panel mb-6 text-red-600 font-semibold">{searchError}</div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Stat Card */}
+        {/* ...[stats cards unchanged]... */}
+        {/* Example: */}
         <div className="glass-panel card-hover flex items-center border-l-4 border-blue-500">
           <div className="p-2 rounded-lg bg-blue-100 mr-4">
             <UserGroupIcon className="h-6 w-6 text-blue-600" />
@@ -131,6 +198,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        {/* [repeat for other stat cards...] */}
         <div className="glass-panel card-hover flex items-center border-l-4 border-emerald-500">
           <div className="p-2 rounded-lg bg-emerald-100 mr-4">
             <CalendarDaysIcon className="h-6 w-6 text-emerald-600" />

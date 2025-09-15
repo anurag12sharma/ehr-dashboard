@@ -1,21 +1,23 @@
 import { PatientSummary, AppointmentSummary } from '@/types/fhir';
-import { IPatient} from '@/lib/models/Patient';
+import { IPatient } from '@/lib/models/Patient';
 import { IAppointment } from '@/lib/models/Appointment';
 
 export function transformPatientToSummary(patient: IPatient): PatientSummary {
   const primaryName = patient.name?.[0] || { family: '', given: [] };
   const primaryPhone = patient.telecom?.find(t => t.system === 'phone')?.value || '';
   const primaryEmail = patient.telecom?.find(t => t.system === 'email')?.value || '';
+  // In search, id may be either .fhirId or .id depending on query projection; fallback for robustness
+  const id = patient.fhirId || (patient as any).id || '';
 
   return {
-    id: patient.fhirId,
-    name: `${primaryName.given?.[0] || ''} ${primaryName.family || ''}`.trim(),
+    id,
+    name: [primaryName.given?.[0], primaryName.family].filter(Boolean).join(' ').trim(),
     email: primaryEmail,
     phone: primaryPhone,
-    birthDate: patient.birthDate,
+    birthDate: patient.birthDate || '',
     gender: patient.gender,
     age: calculateAge(patient.birthDate),
-    active: patient.active,
+    active: typeof patient.active === 'boolean' ? patient.active : true,
   };
 }
 
@@ -24,13 +26,15 @@ export function transformAppointmentToSummary(appointment: IAppointment): Appoin
   const practitioner = appointment.participant?.find(p => p.actor?.reference?.includes('Practitioner'));
 
   const startDate = new Date(appointment.start);
-  const endDate = new Date(appointment.end);
   const today = new Date().toDateString();
 
   return {
     id: appointment.fhirId,
     patientId: patient?.actor?.reference?.split('/').pop() || '',
-    title: appointment.description || appointment.appointmentType?.coding?.[0]?.display || 'Medical Appointment',
+    title:
+      appointment.description ||
+      appointment.appointmentType?.coding?.[0]?.display ||
+      'Medical Appointment',
     patientName: patient?.actor?.display || 'Unknown Patient',
     practitionerName: practitioner?.actor?.display || 'Unknown Practitioner',
     startDateTime: appointment.start,
@@ -38,7 +42,7 @@ export function transformAppointmentToSummary(appointment: IAppointment): Appoin
     duration: appointment.minutesDuration || 30,
     status: appointment.status,
     appointmentType: appointment.appointmentType?.coding?.[0]?.code || 'consultation',
-    location: 'Main Office', // You can extract this from serviceType if available
+    location: 'Main Office', // Can extract dynamically if needed
     reason: appointment.reasonReference?.[0]?.display || '',
     priority: appointment.priority === 1 ? 'urgent' : 'routine',
     isToday: startDate.toDateString() === today,
@@ -133,8 +137,8 @@ export function transformAppointmentFormToDatabase(formData: any): Partial<IAppo
       }] : [])
     ],
     reasonReference: formData.reason ? [{
-        reference: '',
-        display: formData.reason
+      reference: '',
+      display: formData.reason
     }] : []
   };
 }

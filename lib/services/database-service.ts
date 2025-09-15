@@ -10,27 +10,17 @@ class DatabaseService {
 
   // Patient Methods
   async getPatients(params: {
-    search?: string;
+    filter?: any;    // <--- accepts a filter object for advanced Mongo query
+    search?: string; // legacy, not used now
     limit?: number;
     offset?: number;
   } = {}): Promise<IPatient[]> {
     await this.init();
     
-    const { search, limit = 50, offset = 0 } = params;
-    
-    let query: any = {};
-    
-    if (search) {
-      query = {
-        $or: [
-          { 'name.family': { $regex: search, $options: 'i' } },
-          { 'name.given': { $regex: search, $options: 'i' } },
-          { 'telecom.value': { $regex: search, $options: 'i' } }
-        ]
-      };
-    }
+    const { filter = {}, limit = 50, offset = 0 } = params;
 
-    return Patient.find(query)
+    // If there's no filter, return all (cautiously; maybe limit rows)
+    return Patient.find(filter)
       .limit(limit)
       .skip(offset)
       .sort({ updatedAt: -1 })
@@ -63,7 +53,7 @@ class DatabaseService {
     return result !== null;
   }
 
-  // Appointment Methods
+  // Appointment Methods (unchanged)
   async getAppointments(params: {
     startDate?: string;
     endDate?: string;
@@ -72,21 +62,16 @@ class DatabaseService {
     offset?: number;
   } = {}): Promise<IAppointment[]> {
     await this.init();
-    
     const { startDate, endDate, patientId, limit = 50, offset = 0 } = params;
-    
     let query: any = {};
-    
     if (startDate || endDate) {
       query.start = {};
       if (startDate) query.start.$gte = new Date(startDate).toISOString();
       if (endDate) query.start.$lte = new Date(endDate).toISOString();
     }
-    
     if (patientId) {
       query['participant.actor.reference'] = { $regex: patientId, $options: 'i' };
     }
-
     return Appointment.find(query)
       .limit(limit)
       .skip(offset)
@@ -123,7 +108,6 @@ class DatabaseService {
   // Utility Methods
   async getStats() {
     await this.init();
-    
     const [patientCount, appointmentCount, todayAppointments] = await Promise.all([
       Patient.countDocuments({ active: true }),
       Appointment.countDocuments(),
@@ -134,7 +118,6 @@ class DatabaseService {
         }
       })
     ]);
-
     return {
       totalPatients: patientCount,
       totalAppointments: appointmentCount,
