@@ -1,86 +1,100 @@
-// app/api/patients/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { patientService } from '@/lib/services/patient-service';
-import { PatientFormData } from '@/types/fhir';
+import { databaseService } from '@/lib/services/database-service';
+import { transformPatientToSummary, transformPatientFormToDatabase } from '@/lib/transformers/database-transformers';
 
-// GET /api/patients/[id] - Get patient by ID
 export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { id } = await context.params;
   try {
-    const { params } = context; 
-    const patient = await patientService.getPatientById(params.id);
-
-    return NextResponse.json({
-      success: true,
-      data: patient,
-      timestamp: new Date().toISOString(),
-    });
-
-  } catch (error) {
-    const { params } = context; 
-    console.error(`GET /api/patients/${params.id} failed:`, error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Patient not found',
-    }, { status: 404 });
-  }
-}
-
-// PUT /api/patients/[id] - Update patient
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const patientData: PatientFormData = await request.json();
-
-    // Basic validation
-    if (!patientData.firstName || !patientData.lastName) {
+    const patient = await databaseService.getPatientById(id);
+    
+    if (!patient) {
       return NextResponse.json({
         success: false,
-        error: 'First name and last name are required',
-      }, { status: 400 });
+        error: 'Patient not found',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
     }
-
-    const updatedPatient = await patientService.updatePatient(params.id, patientData);
 
     return NextResponse.json({
       success: true,
-      data: updatedPatient,
-      message: 'Patient updated successfully',
+      data: transformPatientToSummary(patient),
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
-    console.error(`PUT /api/patients/${params.id} failed:`, error);
+    console.error(`GET /api/patients/${id} failed:`, error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update patient',
+      error: error instanceof Error ? error.message : 'Failed to fetch patient',
+      timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
 }
 
-// DELETE /api/patients/[id] - Delete (deactivate) patient
-export async function DELETE(
+export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
   try {
-    await patientService.deletePatient(params.id);
+    const formData = await request.json();
+    const updateData = transformPatientFormToDatabase(formData);
+    
+    const patient = await databaseService.updatePatient(id, updateData);
+    
+    if (!patient) {
+      return NextResponse.json({
+        success: false,
+        error: 'Patient not found',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Patient deactivated successfully',
+      data: transformPatientToSummary(patient),
+      message: 'Patient updated successfully',
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
-    console.error(`DELETE /api/patients/${params.id} failed:`, error);
+    console.error(`PUT /api/patients/${id} failed:`, error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update patient',
+      timestamp: new Date().toISOString(),
+    }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = await context.params;
+  try {
+    const deleted = await databaseService.deletePatient(id);
+    
+    if (!deleted) {
+      return NextResponse.json({
+        success: false,
+        error: 'Patient not found',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Patient deleted successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error(`DELETE /api/patients/${id} failed:`, error);
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete patient',
+      timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
 }

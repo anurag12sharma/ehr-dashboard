@@ -299,6 +299,7 @@ export interface FHIRAppointmentParticipant {
     priority: string;
     isUpcoming: boolean;
     isToday: boolean;
+    reason?: string;    
   }
   
 

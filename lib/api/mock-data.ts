@@ -7,16 +7,6 @@ export const mockPatientBundle = {
   },
   "type": "searchset",
   "total": 50,
-  "link": [
-    {
-      "relation": "self",
-      "url": "https://stage.ema-api.com/ema-dev/firm/apiportal/ema/fhir/v2/Patient/"
-    },
-    {
-      "relation": "next",
-      "url": "https://stage.ema-api.com/ema-dev/firm/apiportal/ema/fhir/v2/Patient/?page=2"
-    }
-  ],
   "entry": [
     {
       "fullUrl": "https://stage.ema-api.com/ema-dev/firm/apiportal/ema/fhir/v2/Patient/375404",
