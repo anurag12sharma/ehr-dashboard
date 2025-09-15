@@ -1,6 +1,7 @@
 import connectDB from '@/lib/mongodb';
 import { Patient, IPatient } from '@/lib/models/Patient';
 import { Appointment, IAppointment } from '@/lib/models/Appointment';
+import { ClinicalNote, IClinicalNote } from '@/lib/models/ClinicalNote';
 import { PatientSummary, AppointmentSummary } from '@/types/fhir';
 
 class DatabaseService {
@@ -77,7 +78,6 @@ class DatabaseService {
     // Provider filtering (matches any participant.actor.reference e.g. "Practitioner/123")
     if (providerId) {
       if (!query['participant.actor.reference']) query['participant.actor.reference'] = {};
-      // If already a regex (patient filtering present), turn both into $or clause
       if (query['participant.actor.reference'].$regex) {
         const prevRegex = query['participant.actor.reference'].$regex;
         query.$or = [
@@ -136,11 +136,10 @@ class DatabaseService {
   ): Promise<IAppointment | null> {
     await this.init();
     if (!participants || !startIso || !endIso) return null;
-    // Check for overlap: (existing.start < newEnd && existing.end > newStart)
     const providerRefs = participants
       .filter(p => p.actor?.reference?.startsWith('Practitioner/'))
       .map(p => p.actor.reference);
-    if (providerRefs.length === 0) return null; // Can't conflict if no provider
+    if (providerRefs.length === 0) return null;
 
     const query: any = {
       'participant.actor.reference': { $in: providerRefs },
@@ -151,6 +150,51 @@ class DatabaseService {
       query.fhirId = { $ne: excludeId };
     }
     return Appointment.findOne(query).exec();
+  }
+
+  // --- Clinical Note Methods ---
+  async getClinicalNotes(params: {
+    patientId?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<IClinicalNote[]> {
+    await this.init();
+    const { patientId, limit = 50, offset = 0 } = params;
+    let query: any = {};
+    if (patientId) {
+      query.patientId = patientId;
+    }
+    return ClinicalNote.find(query)
+      .limit(limit)
+      .skip(offset)
+      .sort({ date: -1 })
+      .exec();
+  }
+
+  async createClinicalNote(noteData: Partial<IClinicalNote>): Promise<IClinicalNote> {
+    await this.init();
+    const note = new ClinicalNote(noteData);
+    return note.save();
+  }
+
+  async getClinicalNoteById(id: string): Promise<IClinicalNote | null> {
+    await this.init();
+    return ClinicalNote.findOne({ fhirId: id }).exec();
+  }
+
+  async updateClinicalNote(id: string, noteData: Partial<IClinicalNote>): Promise<IClinicalNote | null> {
+    await this.init();
+    return ClinicalNote.findOneAndUpdate(
+      { fhirId: id },
+      noteData,
+      { new: true, runValidators: true }
+    ).exec();
+  }
+
+  async deleteClinicalNote(id: string): Promise<boolean> {
+    await this.init();
+    const result = await ClinicalNote.findOneAndDelete({ fhirId: id }).exec();
+    return result !== null;
   }
 
   // Utility Methods

@@ -311,3 +311,20 @@ export interface FHIRCodeableConcept {
   coding?: FHIRCoding[];
   text?: string;
 }
+
+
+export interface ClinicalNoteSummary {
+  id: string;
+  patientId: string;
+  authorId: string;
+  authorName: string;
+  category: string;      // e.g. "progress", "discharge", etc.
+  type: string;          // e.g. "clinical-note"
+  status: string;        // e.g. "final", "draft"
+  title: string;
+  date: string;          // ISO date string
+  content: string;
+  encounterId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

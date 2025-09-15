@@ -116,10 +116,10 @@ export default function DashboardPage() {
       color: 'bg-emerald-500',
     },
     {
-      name: 'View Records',
-      href: '/dashboard/records',
+      name: 'View Clinical Notes',
+      href: '/dashboard/clinical-notes',
       icon: ChartBarIcon,
-      description: 'Access patient medical records',
+      description: 'Access patient clinical notes',
       color: 'bg-purple-500',
     },
   ];
@@ -131,53 +131,6 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Dashboard</h1>
         <p className="text-sm text-gray-500">Welcome to your EHR management system</p>
       </div>
-
-      {/* Patient Search */}
-      {/* <form className="max-w-2xl mx-auto flex gap-2 mb-4" onSubmit={handleSearch}>
-        <input
-          className="form-input border px-3 py-2 rounded-md w-full"
-          placeholder="Search patients by name, ID, phone, or identifier"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          autoFocus
-        />
-        <button
-          className="btn btn-primary flex items-center gap-2 px-4 py-2 rounded"
-          type="submit"
-          disabled={searching}
-        >
-          <MagnifyingGlassIcon className="h-5 w-5" />
-          {searching ? "Searching..." : "Search"}
-        </button>
-      </form> */}
-
-      {searchResults && (
-        <div className="glass-panel mb-6">
-          <h2 className="font-semibold text-lg mb-2">Search Results</h2>
-          {searchResults.length === 0 && (
-            <div className="text-sm text-gray-500">No patients found for "{searchTerm}"</div>
-          )}
-          <ul>
-            {searchResults.map(patient => (
-              <li key={patient.id} className="p-2 border-b last:border-b-0 flex justify-between items-center">
-                <div>
-                  <span className="font-medium">{patient.name}</span>
-                  <span className="ml-3 text-sm text-gray-500">{patient.gender}, {patient.birthDate}</span>
-                  {patient.phone && (
-                    <span className="ml-3 text-xs text-gray-600">📞 {patient.phone}</span>
-                  )}
-                </div>
-                <Link href={`/dashboard/patients/${patient.id}`} className="text-blue-600 underline text-xs">
-                  View
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {searchError && (
-        <div className="glass-panel mb-6 text-red-600 font-semibold">{searchError}</div>
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

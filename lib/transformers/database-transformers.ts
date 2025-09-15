@@ -7,9 +7,7 @@ export function transformPatientToSummary(patient: IPatient): PatientSummary {
   const primaryName = patient.name?.[0] || { family: '', given: [] };
   const primaryPhone = patient.telecom?.find(t => t.system === 'phone')?.value || '';
   const primaryEmail = patient.telecom?.find(t => t.system === 'email')?.value || '';
-  // In search, id may be either .fhirId or .id depending on query projection; fallback for robustness
   const id = patient.fhirId || (patient as any).id || '';
-
   return {
     id,
     name: [primaryName.given?.[0], primaryName.family].filter(Boolean).join(' ').trim(),
@@ -85,7 +83,6 @@ function calculateAge(birthDate: string): number {
 
 // --------------- Main update (create/edit) DB transformer ---------------
 export function transformPatientFormToDatabase(formData: any): Partial<IPatient> {
-  // Maps patient form data to database-ready shape, for PUT and POST
   return {
     fhirId: formData.id || `patient-${Date.now()}`,
     active: formData.active ?? true,
@@ -125,7 +122,7 @@ export function transformPatientFormToDatabase(formData: any): Partial<IPatient>
       system: 'PMS',
       value: formData.id || `patient-${Date.now()}`
     }],
-    // Support for extended detail:
+    // Extended fields:
     medicalHistory: formData.medicalHistory || [],
     allergies: formData.allergies || [],
   };
@@ -133,7 +130,10 @@ export function transformPatientFormToDatabase(formData: any): Partial<IPatient>
 
 export function transformAppointmentFormToDatabase(formData: any): Partial<IAppointment> {
   const startDate = new Date(formData.startDateTime);
-  const endDate = new Date(formData.endDateTime || startDate.getTime() + (formData.duration || 30) * 60000);
+  const durationMs = (formData.duration || 30) * 60000;
+  const endDate = formData.endDateTime
+    ? new Date(formData.endDateTime)
+    : new Date(startDate.getTime() + durationMs);
 
   return {
     fhirId: formData.id || `appointment-${Date.now()}`,
@@ -150,6 +150,7 @@ export function transformAppointmentFormToDatabase(formData: any): Partial<IAppo
     end: endDate.toISOString(),
     minutesDuration: formData.duration || 30,
     priority: formData.priority === 'urgent' ? 1 : 5,
+    // Participants: always include patient. Practitioner only if present.
     participant: [
       {
         actor: {
@@ -171,6 +172,45 @@ export function transformAppointmentFormToDatabase(formData: any): Partial<IAppo
     reasonReference: formData.reason ? [{
       reference: '',
       display: formData.reason
-    }] : []
+    }] : [],
+    // Add other supported fields as needed (serviceType, slot, etc) without deleting existing properties
   };
 }
+
+// --- Clinical Note Summary (for table/card/list) ---
+export function transformClinicalNoteToSummary(note: any) {
+  return {
+    id: note.fhirId || note._id?.toString() || '',
+    patientId: note.patientId,
+    authorId: note.authorId,
+    authorName: note.authorName,
+    category: note.category || 'progress',
+    type: note.type || 'clinical-note',
+    status: note.status || 'final',
+    title: note.title,
+    date: note.date,
+    content: note.content,
+    encounterId: note.encounterId || null,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+  };
+}
+
+// --- Clinical Note DB Transformer (for create/edit) ---
+export function transformClinicalNoteFormToDatabase(formData: any) {
+  return {
+    fhirId: formData.id || `clinical-note-${Date.now()}`,
+    patientId: formData.patientId,
+    authorId: formData.authorId,
+    authorName: formData.authorName,
+    category: formData.category || 'progress',
+    type: formData.type || 'clinical-note',
+    status: formData.status || 'final',
+    title: formData.title,
+    date: formData.date || new Date().toISOString(),
+    content: formData.content,
+    encounterId: formData.encounterId || undefined,
+    meta: formData.meta || undefined,
+  };
+}
+
