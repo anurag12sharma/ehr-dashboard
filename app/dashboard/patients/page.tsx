@@ -61,21 +61,10 @@ export default function PatientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleViewPatient = async (patientSummary: PatientSummary) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/patients/${patientSummary.id}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        setSelectedPatient(json.data);  // ensures you have the latest, full patient data
-      } else {
-        setSelectedPatient(patientSummary); // fallback
-      }
-      setModalMode('view');
-      setIsModalOpen(true);
-    } finally {
-      setLoading(false);
-    }
+  const handleViewPatient = async (patient: PatientSummary) => {
+    setSelectedPatient(patient);
+    setModalMode('view');
+    setIsModalOpen(true);
   };
   
 
