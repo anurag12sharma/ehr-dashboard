@@ -1,8 +1,20 @@
-// components/patients/PatientForm.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { PatientFormData } from '@/types/fhir';
+
+// FHIR Patient API shape
+type FhirPatient = {
+  id?: string;
+  name?: { given?: string[]; family?: string }[];
+  address?: { line?: string[]; city?: string; state?: string; postalCode?: string; country?: string }[];
+  telecom?: { system: 'email' | 'phone'; value: string }[];
+  gender?: string;
+  birthDate?: string;
+  active?: boolean;
+  identifier?: { use?: string; value?: string }[];
+};
+type ApiResult<T = unknown> = { success: boolean; data?: T; error?: string };
 
 interface PatientFormProps {
   mode: 'create' | 'edit';
@@ -10,6 +22,12 @@ interface PatientFormProps {
   onSubmit: (data: PatientFormData) => Promise<{ success: boolean; error?: string }>;
   onCancel: () => void;
 }
+
+const allowedGenders = ['male', 'female', 'other', 'unknown'] as const;
+function parseGender(g: unknown): 'male' | 'female' | 'other' | 'unknown' {
+  return allowedGenders.includes(g as any) ? (g as any) : 'unknown';
+}
+
 
 const initialFormData: PatientFormData = {
   firstName: '',
@@ -46,21 +64,23 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
     if (mode === 'edit' && patientId) {
       loadPatientData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, patientId]);
 
   const loadPatientData = async () => {
     setLoadingPatient(true);
     try {
       const response = await fetch(`/api/patients/${patientId}`);
-      const result = await response.json();
+      const result: ApiResult<FhirPatient> = await response.json();
 
-      if (result.success) {
+      if (result.success && result.data) {
         const patient = result.data;
         const name = patient.name?.[0];
         const address = patient.address?.[0];
-        const phone = patient.telecom?.find((t: any) => t.system === 'phone')?.value;
-        const email = patient.telecom?.find((t: any) => t.system === 'email')?.value;
-        
+        const phone = patient.telecom?.find((t) => t.system === 'phone')?.value;
+        const email = patient.telecom?.find((t) => t.system === 'email')?.value;
+        const medicalRecordNumber =
+          patient.identifier?.find((i) => i.use === 'official')?.value || '';
 
         setFormData({
           id: patient.id,
@@ -68,7 +88,7 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
           lastName: name?.family || '',
           email: email || '',
           phone: phone || '',
-          gender: patient.gender || 'unknown',
+          gender: parseGender(patient.gender),
           birthDate: patient.birthDate || '',
           address: {
             line1: address?.line?.[0] || '',
@@ -83,11 +103,11 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             relationship: '',
             phone: '',
           },
-          medicalRecordNumber: patient.identifier?.find((i: any) => i.use === 'official')?.value || '',
+          medicalRecordNumber,
           active: patient.active !== false,
         });
       } else {
-        setError(result.error);
+        setError(result.error || 'Failed to load patient data');
       }
     } catch (error) {
       setError('Failed to load patient data');
@@ -113,14 +133,20 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
     }
   };
 
-  const handleInputChange = (field: keyof PatientFormData, value: any) => {
+  const handleInputChange = <K extends keyof PatientFormData>(
+    field: K,
+    value: PatientFormData[K]
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleAddressChange = (field: keyof PatientFormData['address'], value: string) => {
+  const handleAddressChange = (
+    field: keyof PatientFormData['address'],
+    value: string
+  ) => {
     setFormData(prev => ({
       ...prev,
       address: {
@@ -130,7 +156,10 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
     }));
   };
 
-  const handleEmergencyContactChange = (field: keyof NonNullable<PatientFormData['emergencyContact']>, value: string) => {
+  const handleEmergencyContactChange = (
+    field: keyof NonNullable<PatientFormData['emergencyContact']>,
+    value: string
+  ) => {
     setFormData(prev => ({
       ...prev,
       emergencyContact: {
@@ -216,15 +245,19 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
               Gender
             </label>
             <select
-              value={formData.gender}
-              onChange={e => handleInputChange('gender', e.target.value)}
-              className="input-soft"
-            >
-              <option value="unknown">Unknown</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
+  value={formData.gender}
+  onChange={e =>
+    handleInputChange('gender', e.target.value as PatientFormData['gender'])
+  }
+  className="input-soft"
+>
+  <option value="unknown">Unknown</option>
+  <option value="male">Male</option>
+  <option value="female">Female</option>
+  <option value="other">Other</option>
+</select>
+
+
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -245,7 +278,9 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             <input
               type="text"
               value={formData.medicalRecordNumber}
-              onChange={e => handleInputChange('medicalRecordNumber', e.target.value)}
+              onChange={e =>
+                handleInputChange('medicalRecordNumber', e.target.value)
+              }
               className="input-soft"
             />
           </div>
@@ -337,7 +372,9 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             <input
               type="text"
               value={formData.emergencyContact?.name || ''}
-              onChange={e => handleEmergencyContactChange('name', e.target.value)}
+              onChange={e =>
+                handleEmergencyContactChange('name', e.target.value)
+              }
               className="input-soft"
             />
           </div>
@@ -348,7 +385,9 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             <input
               type="text"
               value={formData.emergencyContact?.relationship || ''}
-              onChange={e => handleEmergencyContactChange('relationship', e.target.value)}
+              onChange={e =>
+                handleEmergencyContactChange('relationship', e.target.value)
+              }
               className="input-soft"
               placeholder="e.g., Spouse, Parent"
             />
@@ -360,7 +399,9 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             <input
               type="tel"
               value={formData.emergencyContact?.phone || ''}
-              onChange={e => handleEmergencyContactChange('phone', e.target.value)}
+              onChange={e =>
+                handleEmergencyContactChange('phone', e.target.value)
+              }
               className="input-soft"
             />
           </div>
@@ -394,7 +435,13 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             disabled={loading}
             className="btn-main"
           >
-            {loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Patient' : 'Update Patient')}
+            {loading
+              ? mode === 'create'
+                ? 'Creating...'
+                : 'Updating...'
+              : mode === 'create'
+                ? 'Create Patient'
+                : 'Update Patient'}
           </button>
         </div>
       </div>

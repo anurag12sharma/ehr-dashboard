@@ -175,7 +175,7 @@ export default function AppointmentsPage() {
             <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <div className="text-sm text-gray-500">Today's Appointments</div>
+          <div className="text-sm text-gray-500">Today&apos;s Appointments</div>
             <div className="text-2xl font-semibold text-gray-900">
               {todaysAppointments}
             </div>

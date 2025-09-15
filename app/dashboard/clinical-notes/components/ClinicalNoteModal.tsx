@@ -8,8 +8,9 @@ interface ClinicalNoteModalProps {
   mode: 'create' | 'edit' | 'view';
   note: ClinicalNoteSummary | null;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (data: Partial<ClinicalNoteSummary>) => Promise<{ success: boolean; error?: string }>;
 }
+
 
 const initialFormData: Partial<ClinicalNoteSummary> = {
   patientId: '',
@@ -49,7 +50,10 @@ export function ClinicalNoteModal({ mode, note, onClose, onSubmit }: ClinicalNot
     }
   }, [note, mode]);
 
-  const handleInputChange = (field: keyof ClinicalNoteSummary, value: any) => {
+  const handleInputChange = <K extends keyof ClinicalNoteSummary>(
+    field: K,
+    value: ClinicalNoteSummary[K]
+  ) => {  
     setFormData(prev => ({
       ...prev,
       [field]: value,

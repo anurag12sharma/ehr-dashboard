@@ -71,7 +71,7 @@ export default function ClinicalNotesPage() {
       // silent
     }
   };
-  const handleModalSubmit = async (data: any) => {
+  const handleModalSubmit = async (data: Partial<ClinicalNoteSummary>) => {
     try {
       const url = modalMode === 'create'
         ? '/api/clinical-notes'

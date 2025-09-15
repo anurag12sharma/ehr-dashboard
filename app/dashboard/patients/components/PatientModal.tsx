@@ -4,14 +4,46 @@ import React, { useState, useEffect } from "react";
 import { PatientSummary, PatientFormData } from "@/types/fhir";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
+type MedicalHistoryEntry = {
+  condition: string;
+  diagnosisDate?: string;
+  notes?: string;
+};
+
+type AllergyEntry = {
+  substance: string;
+  reaction?: string;
+  severity?: string;
+  notes?: string;
+};
+
+type TelecomEntry = { system: "email" | "phone"; value: string };
+
+interface FhirApiPatient {
+  fhirId?: string;
+  name?: { given?: string[]; family?: string }[];
+  telecom?: { system: "email" | "phone"; value: string }[];
+  address?: { line?: string[]; city?: string; state?: string; postalCode?: string; country?: string }[];
+  active?: boolean;
+  gender?: "male" | "female" | "other" | "unknown" | string;
+  birthDate?: string;
+  email?: string;
+  phone?: string;
+  medicalHistory?: MedicalHistoryEntry[];
+  allergies?: AllergyEntry[];
+  [key: string]: unknown;
+}
+
+
 interface PatientModalProps {
   mode: "create" | "edit" | "view";
-  patient: any; // Accept any for extended details
+  patient: FhirApiPatient | null;
   onClose: () => void;
   onSubmit: (
     data: PatientFormData
   ) => Promise<{ success: boolean; error?: string }>;
 }
+
 
 const initialFormData: PatientFormData = {
   firstName: "",
@@ -49,8 +81,9 @@ export function PatientModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
-  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
-  const [allergies, setAllergies] = useState<any[]>([]);
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryEntry[]>([]);
+const [allergies, setAllergies] = useState<AllergyEntry[]>([]);
+
 
   useEffect(() => {
     if ((mode === "edit" || mode === "view") && patient) {
@@ -89,15 +122,22 @@ export function PatientModal({
               ? data.name[0].family
               : "",
 
-          email:
-            data.telecom?.find((t: any) => t.system === "email")?.value ||
-            data.email ||
-            "",
-          phone:
-            data.telecom?.find((t: any) => t.system === "phone")?.value ||
-            data.phone ||
-            "",
-          gender: data.gender || "unknown",
+              email:
+              data.telecom?.find((t: TelecomEntry) => t.system === "email")?.value ||
+              data.email ||
+              "",
+            phone:
+              data.telecom?.find((t: TelecomEntry) => t.system === "phone")?.value ||
+              data.phone ||
+              "",
+            gender:
+              data.gender === "male" ||
+              data.gender === "female" ||
+              data.gender === "other" ||
+              data.gender === "unknown"
+                ? data.gender
+                : "unknown",
+            
           birthDate: data.birthDate || "",
           address: {
             line1: data.address?.[0]?.line?.[0] || "",
@@ -130,8 +170,13 @@ export function PatientModal({
     else setError(result.error || "Operation failed");
   };
 
-  const handleInputChange = (field: keyof PatientFormData, value: any) =>
+  const handleInputChange = <K extends keyof PatientFormData>(
+    field: K,
+    value: PatientFormData[K]
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+  
 
   const handleAddressChange = (
     field: keyof PatientFormData["address"],
@@ -185,8 +230,12 @@ export function PatientModal({
                 <div>
                   <div className="text-xs text-gray-500">Patient ID</div>
                   <div className="font-medium text-gray-900">
-                    {patient.fhirId || patient.id}
-                  </div>
+  {typeof patient.fhirId === "string" && patient.fhirId
+    ? patient.fhirId
+    : typeof patient.id === "string" && patient.id
+      ? patient.id
+      : "Not Provided"}
+</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">Status</div>
@@ -198,8 +247,12 @@ export function PatientModal({
               <div>
                 <div className="text-xs text-gray-500">Name</div>
                 <div className="font-medium text-gray-900">
-                  {patient.firstName} {patient.lastName}
-                </div>
+  {(typeof patient.firstName === 'string' && patient.firstName) || ''}
+  {(typeof patient.lastName === 'string' && patient.lastName) ? ` ${patient.lastName}` : ''}
+  {!(typeof patient.firstName === 'string' && patient.firstName) && !(typeof patient.lastName === 'string' && patient.lastName) && (
+    <span className="italic text-xs text-gray-400">No name provided</span>
+  )}
+</div>
               </div>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
@@ -359,7 +412,7 @@ export function PatientModal({
                   <select
                     value={formData.gender}
                     onChange={(e) =>
-                      handleInputChange("gender", e.target.value)
+                      handleInputChange("gender", e.target.value as PatientFormData["gender"])
                     }
                     className="input-soft"
                   >

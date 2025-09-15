@@ -1,10 +1,21 @@
-// components/TokenStatus.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
+type TokenStatusResult = {
+  success: boolean;
+  error?: string;
+  data?: {
+    tokenExpiry?: string;
+    [key: string]: unknown; // allows additional fields if needed
+  };
+  instructions?: string;
+  [key: string]: unknown; // allows unknown keys
+};
+
+
 export function TokenStatus() {
-  const [tokenStatus, setTokenStatus] = useState<any>(null);
+  const [tokenStatus, setTokenStatus] = useState<TokenStatusResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const checkTokenStatus = async () => {
