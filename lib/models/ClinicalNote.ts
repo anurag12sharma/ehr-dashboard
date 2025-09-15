@@ -13,7 +13,7 @@ export interface IClinicalNote extends Document {
   content: string;
   encounterId?: string;
   date: string;     // ISO string
-  meta?: any;
+  meta?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -38,7 +38,7 @@ export interface IAppointment extends Document {
     required: string;
     status: string;
   }[];
-  meta?: any;
+  meta?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }

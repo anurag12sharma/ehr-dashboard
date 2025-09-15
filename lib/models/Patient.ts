@@ -47,10 +47,10 @@ export interface IPatient extends Document {
     system: string;
     value: string;
   }[];
-  extension?: any[];
-  maritalStatus?: any;
+  extension?: Record<string, unknown>[];
+  maritalStatus?: Record<string, unknown>;
   deceasedBoolean?: boolean;
-  meta?: any;
+  meta?: Record<string, unknown>;
   medicalHistory?: IMedicalHistoryEntry[];
   allergies?: IAllergyEntry[];
   createdAt: Date;

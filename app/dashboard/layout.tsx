@@ -108,7 +108,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         `}
       >
         <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-          <path fill-rule="evenodd"  d={item.icon} clip-rule="evenodd"/>
+          <path d={item.icon}/>
         </svg>
         <span>{item.name}</span>
       </Link>

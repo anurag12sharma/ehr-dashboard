@@ -1,15 +1,46 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PatientFormData } from '@/types/fhir';
+import { PatientFormData, PatientSummary } from '@/types/fhir';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+
+type MedicalHistoryEntry = {
+  condition: string;
+  diagnosisDate?: string;
+  notes?: string;
+};
+type AllergyEntry = {
+  substance: string;
+  reaction?: string;
+  severity?: string;
+  notes?: string;
+};
+type TelecomEntry = { system: 'email' | 'phone'; value: string };
+type AddressEntry = { line?: string[]; city?: string; state?: string; postalCode?: string; country?: string };
 
 interface PatientModalProps {
   mode: 'create' | 'edit' | 'view';
-  patient: any;
+  patient: PatientApiData | PatientSummary | null;
   onClose: () => void;
   onSubmit: (data: PatientFormData) => Promise<{ success: boolean; error?: string }>;
 }
+
+
+export interface PatientApiData {
+  id?: string;
+  fhirId?: string;
+  name?: { given?: string[]; family?: string }[];
+  telecom?: TelecomEntry[];
+  address?: AddressEntry[];
+  active?: boolean;
+  gender?: string;
+  birthDate?: string;
+  email?: string;
+  phone?: string;
+  medicalHistory?: MedicalHistoryEntry[];
+  allergies?: AllergyEntry[];
+}
+
 
 const initialFormData: PatientFormData = {
   firstName: '',
@@ -42,8 +73,9 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
-  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
-  const [allergies, setAllergies] = useState<any[]>([]);
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryEntry[]>([]);
+const [allergies, setAllergies] = useState<AllergyEntry[]>([]);
+
 
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && patient) {
@@ -77,8 +109,8 @@ export function PatientModal({ mode, patient, onClose, onSubmit }: PatientModalP
             Array.isArray(data.name) && data.name.length > 0 && data.name[0].family
               ? data.name[0].family
               : '',
-          email: data.telecom?.find((t: any) => t.system === 'email')?.value || data.email || '',
-          phone: data.telecom?.find((t: any) => t.system === 'phone')?.value || data.phone || '',
+              email: data.telecom?.find((t: TelecomEntry) => t.system === 'email')?.value || data.email || '',
+              phone: data.telecom?.find((t: TelecomEntry) => t.system === 'phone')?.value || data.phone || '',              
           gender: data.gender || 'unknown',
           birthDate: data.birthDate || '',
           address: {
