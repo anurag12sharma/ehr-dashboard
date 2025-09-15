@@ -83,7 +83,7 @@ class DatabaseService {
       limit = 50,
       offset = 0,
     } = params;
-    let query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = {};
 
     // Date filtering
     if (startDate || endDate) {
@@ -194,7 +194,7 @@ class DatabaseService {
 
     if (providerRefs.length === 0) return null;
 
-    const query: any = {
+    const query: Record<string, unknown> = {
       "participant.actor.reference": { $in: providerRefs },
       start: { $lt: endIso },
       end: { $gt: startIso },
@@ -215,7 +215,7 @@ class DatabaseService {
   ): Promise<IClinicalNote[]> {
     await this.init();
     const { patientId, limit = 50, offset = 0 } = params;
-    let query: any = {};
+    const query: Record<string, unknown> = {};
     if (patientId) {
       query.patientId = patientId;
     }

@@ -25,7 +25,9 @@ interface PatientFormProps {
 
 const allowedGenders = ['male', 'female', 'other', 'unknown'] as const;
 function parseGender(g: unknown): 'male' | 'female' | 'other' | 'unknown' {
-  return allowedGenders.includes(g as any) ? (g as any) : 'unknown';
+  return allowedGenders.includes(g as (typeof allowedGenders)[number])
+    ? (g as (typeof allowedGenders)[number])
+    : 'unknown';
 }
 
 
