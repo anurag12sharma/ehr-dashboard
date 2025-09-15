@@ -4,9 +4,9 @@ import { transformAppointmentToSummary, transformAppointmentFormToDatabase } fro
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } =await context.params;
+  const { id } = params;
   try {
     const appointment = await databaseService.getAppointmentById(id);
 
@@ -36,9 +36,9 @@ export async function GET(
 // --- Robust PUT: with provider/patient conflict/overlap check before update ---
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   try {
     const formData = await request.json();
     const updateData = transformAppointmentFormToDatabase(formData);
@@ -107,9 +107,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } =await context.params;
+  const { id } =await params;
   try {
     const deleted = await databaseService.deleteAppointment(id);
 
