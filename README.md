@@ -34,9 +34,8 @@ This project demonstrates the development of a modern healthcare dashboard that 
 
 - **Frontend**: Next.js (React framework)
 - **API Integration**: RESTful APIs for EHR system connectivity
-- **Styling**: Modern CSS/Tailwind CSS
-- **Database**: Compatible with major EHR database systems
-- **Authentication**: Secure user authentication and authorization
+- **Styling**: Tailwind CSS
+- **Database**: MongoDB
 
 ## Quickstart
 
