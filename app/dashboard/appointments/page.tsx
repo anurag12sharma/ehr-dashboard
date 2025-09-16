@@ -45,8 +45,9 @@ export default function AppointmentsPage() {
       const result = await response.json();
 
       if (result.success) {
-        setAppointments(result.data);
-        setFilteredAppointments(result.data);
+        const reversed = result.data.slice().reverse();
+        setAppointments(reversed);
+        setFilteredAppointments(reversed);
       }
     } catch (error) {
       // silent

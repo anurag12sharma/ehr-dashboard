@@ -139,8 +139,8 @@ export function PatientDetails({ patientId, onEdit, onDelete, onBack }: PatientD
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
           <p className="text-sm text-gray-500">
-            Patient ID: {patient.id || '-'}
-            {medicalRecordNumber && <> · MRN: {medicalRecordNumber}</>}
+            {/* Patient ID: {patient.id || '-'}
+            {medicalRecordNumber && <> · MRN: {medicalRecordNumber}</>} */}
           </p>
           <div className="mt-1">
             {patient.active ? (
@@ -152,8 +152,101 @@ export function PatientDetails({ patientId, onEdit, onDelete, onBack }: PatientD
         </div>
       </div>
 
-      {/* Patient Details Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+  {/* Patient Details Grid */}
+  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      {/* Medical History, Allergies, Medications, Immunizations */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Medical History */}
+        <div className="glass-panel">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Medical History</h3>
+          {patient?.medicalHistory?.length ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {patient.medicalHistory?.map((entry: any, idx: number) => (
+                <li key={idx}>
+                  <span className="font-medium text-gray-800">{entry.condition}</span>
+                  {entry.diagnosisDate && (
+                    <span className="ml-2 text-xs text-gray-500">({entry.diagnosisDate})</span>
+                  )}
+                  {entry.notes && (
+                    <span className="ml-2 text-xs text-gray-400">- {entry.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No medical history recorded.</p>
+          )}
+        </div>
+
+        {/* Allergies */}
+        <div className="glass-panel">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Allergies</h3>
+          {patient?.allergies?.length ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {patient.allergies?.map((entry: any, idx: number) => (
+                <li key={idx}>
+                  <span className="font-medium text-gray-800">{entry.substance}</span>
+                  {entry.reaction && (
+                    <span className="ml-2 text-xs text-gray-500">({entry.reaction})</span>
+                  )}
+                  {entry.severity && (
+                    <span className="ml-2 text-xs text-red-500">[{entry.severity}]</span>
+                  )}
+                  {entry.notes && (
+                    <span className="ml-2 text-xs text-gray-400">- {entry.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No allergies recorded.</p>
+          )}
+        </div>
+
+        {/* Medications */}
+        <div className="glass-panel">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Medications</h3>
+          {patient?.medications?.length ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {patient.medications?.map((med: { name: string; dosage?: string; frequency?: string }, idx: number) => (
+                <li key={idx}>
+                  <span className="font-medium text-gray-800">{med.name}</span>
+                  {med.dosage && (
+                    <span className="ml-2 text-xs text-gray-500">({med.dosage})</span>
+                  )}
+                  {med.frequency && (
+                    <span className="ml-2 text-xs text-gray-400">- {med.frequency}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No medications recorded.</p>
+          )}
+        </div>
+
+        {/* Immunizations */}
+        <div className="glass-panel">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Immunizations</h3>
+          {patient?.immunizations?.length ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {patient.immunizations?.map((imm: { vaccine: string; date?: string; notes?: string }, idx: number) => (
+                <li key={idx}>
+                  <span className="font-medium text-gray-800">{imm.vaccine}</span>
+                  {imm.date && (
+                    <span className="ml-2 text-xs text-gray-500">({imm.date})</span>
+                  )}
+                  {imm.notes && (
+                    <span className="ml-2 text-xs text-gray-400">- {imm.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No immunizations recorded.</p>
+          )}
+        </div>
+      </div>
         {/* Demographics */}
         <div className="glass-panel">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Demographics</h3>

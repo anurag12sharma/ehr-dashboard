@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PatientFormData } from '@/types/fhir';
+import { PatientFormData, MedicalHistoryEntry, AllergyEntry } from '@/types/fhir';
 
 // FHIR Patient API shape
 type FhirPatient = {
@@ -13,6 +13,10 @@ type FhirPatient = {
   birthDate?: string;
   active?: boolean;
   identifier?: { use?: string; value?: string }[];
+  medicalHistory?: MedicalHistoryEntry[];
+  allergies?: AllergyEntry[];
+  medications?: { name: string; dosage?: string; frequency?: string }[];
+  immunizations?: { vaccine: string; date?: string; notes?: string }[];
 };
 type ApiResult<T = unknown> = { success: boolean; data?: T; error?: string };
 
@@ -53,6 +57,10 @@ const initialFormData: PatientFormData = {
   },
   medicalRecordNumber: '',
   active: true,
+  medicalHistory: [],
+  allergies: [],
+  medications: [],
+  immunizations: [],
 };
 
 export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientFormProps) {
@@ -84,7 +92,8 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
         const medicalRecordNumber =
           patient.identifier?.find((i) => i.use === 'official')?.value || '';
 
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           id: patient.id,
           firstName: name?.given?.[0] || '',
           lastName: name?.family || '',
@@ -107,7 +116,11 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
           },
           medicalRecordNumber,
           active: patient.active !== false,
-        });
+          medicalHistory: patient.medicalHistory || [],
+          allergies: patient.allergies || [],
+          medications: patient.medications || [],
+          immunizations: patient.immunizations || [],
+        }));
       } else {
         setError(result.error || 'Failed to load patient data');
       }
@@ -123,8 +136,15 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
     setLoading(true);
     setError(null);
 
+    // Filter out incomplete entries before submitting
+    const cleanedFormData: PatientFormData = {
+      ...formData,
+      medicalHistory: (formData.medicalHistory || []).filter(entry => entry.condition && entry.condition.trim() !== ''),
+      allergies: (formData.allergies || []).filter(entry => entry.substance && entry.substance.trim() !== ''),
+    };
+
     try {
-      const result = await onSubmit(formData);
+      const result = await onSubmit(cleanedFormData);
       if (!result.success) {
         setError(result.error || 'Operation failed');
       }
@@ -168,6 +188,95 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
         ...prev.emergencyContact!,
         [field]: value,
       },
+    }));
+  };
+
+
+  // Handlers for medical history
+  const handleMedicalHistoryChange = (idx: number, field: keyof MedicalHistoryEntry, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalHistory: prev.medicalHistory?.map((entry, i) => i === idx ? { ...entry, [field]: value } : entry),
+    }));
+  };
+  const handleAddMedicalHistory = () => {
+    setFormData(prev => ({
+      ...prev,
+      medicalHistory: [...(prev.medicalHistory || []), { condition: '', diagnosisDate: '', notes: '' }],
+    }));
+  };
+  const handleRemoveMedicalHistory = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalHistory: prev.medicalHistory?.filter((_, i) => i !== idx),
+    }));
+  };
+
+  // Handlers for allergies
+  const handleAllergyChange = (idx: number, field: keyof AllergyEntry, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      allergies: prev.allergies?.map((entry, i) => i === idx ? { ...entry, [field]: value } : entry),
+    }));
+  };
+  const handleAddAllergy = () => {
+    setFormData(prev => ({
+      ...prev,
+      allergies: [...(prev.allergies || []), { substance: '', reaction: '', severity: '', notes: '' }],
+    }));
+  };
+  const handleRemoveAllergy = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      allergies: prev.allergies?.filter((_, i) => i !== idx),
+    }));
+  };
+
+  // Handlers for medications
+  const handleMedicationChange = (
+    idx: number,
+    field: keyof NonNullable<PatientFormData['medications']>[number],
+    value: string
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      medications: (prev.medications ?? []).map((entry, i) => i === idx ? { ...entry, [field]: value } : entry),
+    }));
+  };
+  const handleAddMedication = () => {
+    setFormData(prev => ({
+      ...prev,
+  medications: [...(prev.medications || []), { name: '', dosage: '', frequency: '' }],
+    }));
+  };
+  const handleRemoveMedication = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+  medications: prev.medications?.filter((_: any, i: number) => i !== idx),
+    }));
+  };
+
+  // Handlers for immunizations
+  const handleImmunizationChange = (
+    idx: number,
+    field: keyof NonNullable<PatientFormData['immunizations']>[number],
+    value: string
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      immunizations: (prev.immunizations ?? []).map((entry, i) => i === idx ? { ...entry, [field]: value } : entry),
+    }));
+  };
+  const handleAddImmunization = () => {
+    setFormData(prev => ({
+      ...prev,
+  immunizations: [...(prev.immunizations || []), { vaccine: '', date: '', notes: '' }],
+    }));
+  };
+  const handleRemoveImmunization = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+  immunizations: prev.immunizations?.filter((_: any, i: number) => i !== idx),
     }));
   };
 
@@ -408,6 +517,141 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
             />
           </div>
         </div>
+      </div>
+
+      {/* Medical History */}
+      <div className="glass-panel shadow-md">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Medical History</h3>
+        {(formData.medicalHistory || []).map((entry, idx) => (
+          <div key={idx} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Condition"
+              value={entry.condition}
+              onChange={e => handleMedicalHistoryChange(idx, 'condition', e.target.value)}
+              className="input-soft w-1/3"
+            />
+            <input
+              type="date"
+              placeholder="Diagnosis Date"
+              value={entry.diagnosisDate || ''}
+              onChange={e => handleMedicalHistoryChange(idx, 'diagnosisDate', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Notes"
+              value={entry.notes || ''}
+              onChange={e => handleMedicalHistoryChange(idx, 'notes', e.target.value)}
+              className="input-soft w-1/3"
+            />
+            <button type="button" className="btn-outline" onClick={() => handleRemoveMedicalHistory(idx)}>-</button>
+          </div>
+        ))}
+        <button type="button" className="btn-main mt-2" onClick={handleAddMedicalHistory}>Add Entry</button>
+      </div>
+
+      {/* Allergies */}
+      <div className="glass-panel shadow-md">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Allergies</h3>
+        {(formData.allergies || []).map((entry, idx) => (
+          <div key={idx} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Substance"
+              value={entry.substance}
+              onChange={e => handleAllergyChange(idx, 'substance', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Reaction"
+              value={entry.reaction || ''}
+              onChange={e => handleAllergyChange(idx, 'reaction', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Severity"
+              value={entry.severity || ''}
+              onChange={e => handleAllergyChange(idx, 'severity', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Notes"
+              value={entry.notes || ''}
+              onChange={e => handleAllergyChange(idx, 'notes', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <button type="button" className="btn-outline" onClick={() => handleRemoveAllergy(idx)}>-</button>
+          </div>
+        ))}
+        <button type="button" className="btn-main mt-2" onClick={handleAddAllergy}>Add Entry</button>
+      </div>
+
+      {/* Medications */}
+      <div className="glass-panel shadow-md">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Medications</h3>
+        {(formData.medications || []).map((entry, idx) => (
+          <div key={idx} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Name"
+              value={entry.name}
+              onChange={e => handleMedicationChange(idx, 'name', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Dosage"
+              value={entry.dosage || ''}
+              onChange={e => handleMedicationChange(idx, 'dosage', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Frequency"
+              value={entry.frequency || ''}
+              onChange={e => handleMedicationChange(idx, 'frequency', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <button type="button" className="btn-outline" onClick={() => handleRemoveMedication(idx)}>-</button>
+          </div>
+        ))}
+        <button type="button" className="btn-main mt-2" onClick={handleAddMedication}>Add Entry</button>
+      </div>
+
+      {/* Immunizations */}
+      <div className="glass-panel shadow-md">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Immunizations</h3>
+        {(formData.immunizations || []).map((entry, idx) => (
+          <div key={idx} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Vaccine"
+              value={entry.vaccine}
+              onChange={e => handleImmunizationChange(idx, 'vaccine', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="date"
+              placeholder="Date"
+              value={entry.date || ''}
+              onChange={e => handleImmunizationChange(idx, 'date', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <input
+              type="text"
+              placeholder="Notes"
+              value={entry.notes || ''}
+              onChange={e => handleImmunizationChange(idx, 'notes', e.target.value)}
+              className="input-soft w-1/4"
+            />
+            <button type="button" className="btn-outline" onClick={() => handleRemoveImmunization(idx)}>-</button>
+          </div>
+        ))}
+        <button type="button" className="btn-main mt-2" onClick={handleAddImmunization}>Add Entry</button>
       </div>
 
       {/* Status and Actions */}

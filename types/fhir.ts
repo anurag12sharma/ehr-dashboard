@@ -101,6 +101,8 @@ export interface FHIRPatient {
   // ---- Extensions ----
   medicalHistory?: MedicalHistoryEntry[];
   allergies?: AllergyEntry[];
+  medications?: Array<{ name: string; dosage?: string; frequency?: string }>;
+  immunizations?: Array<{ vaccine: string; date?: string; notes?: string }>;
 }
 
 // For forms and UI convenience
@@ -130,6 +132,8 @@ export interface PatientFormData {
   // Optional support for input/edit:
   medicalHistory?: MedicalHistoryEntry[];
   allergies?: AllergyEntry[];
+  medications?: Array<{ name: string; dosage?: string; frequency?: string }>;
+  immunizations?: Array<{ vaccine: string; date?: string; notes?: string }>;
 }
 
 export interface PatientSummary {

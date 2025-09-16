@@ -65,7 +65,24 @@ export function AppointmentModal({
   // Load appointment data for edit/view mode
   useEffect(() => {
     if ((mode === "edit" || mode === "view") && appointment) {
-      loadAppointmentData();
+      setFormData({
+        id: appointment.id,
+        patientId: appointment.patientId,
+        patientName: appointment.patientName || "",
+        practitionerId: "", 
+        practitionerName: appointment.practitionerName || "",
+        title: appointment.title,
+        description: "",
+        appointmentType: appointment.appointmentType as AppointmentFormData["appointmentType"],
+        status: appointment.status as AppointmentFormData["status"],
+        startDateTime: appointment.startDateTime,
+        endDateTime: appointment.endDateTime,
+        duration: appointment.duration,
+        reason: appointment.reason || "",
+        notes: "", 
+        location: appointment.location || "Room 101",
+        priority: (appointment.priority as AppointmentFormData["priority"]) || "routine",
+      });
     } else {
       setFormData(initialFormData);
     }
@@ -88,47 +105,7 @@ export function AppointmentModal({
   };
 
   const loadAppointmentData = async () => {
-    if (!appointment) return;
-    setLoadingAppointment(true);
-    try {
-      const response = await fetch(`/api/appointments/${appointment.id}`);
-      const result = await response.json();
-      if (result.success) {
-        const fhirAppointment = result.data;
-        const participants: FhirParticipant[] =
-          fhirAppointment.participant ?? [];
-        const patient = participants.find((p) =>
-          p.actor?.reference?.includes("Patient")
-        );
-        const practitioner = participants.find((p) =>
-          p.actor?.reference?.includes("Practitioner")
-        );
-        setFormData({
-          id: fhirAppointment.id,
-          patientId: patient?.actor?.reference?.split("/")[1] || "",
-          patientName: patient?.actor?.display || "",
-          practitionerId:
-            practitioner?.actor?.reference?.split("/")[1] || "practitioner-001",
-          practitionerName: practitioner?.actor?.display || "Dr. Sarah Johnson",
-          title: fhirAppointment.description || "",
-          description: fhirAppointment.comment || "",
-          appointmentType:
-            fhirAppointment.appointmentType?.coding?.[0]?.code || "checkup",
-          status: fhirAppointment.status,
-          startDateTime: fhirAppointment.start || "",
-          endDateTime: fhirAppointment.end || "",
-          duration: fhirAppointment.minutesDuration || 30,
-          reason: fhirAppointment.reasonReference?.[0]?.display || "",
-          notes: fhirAppointment.comment || "",
-          location: fhirAppointment.location || "Room 101",
-          priority: fhirAppointment.priority === 1 ? "urgent" : "routine",
-        });
-      }
-    } catch {
-      setError("Failed to load appointment data");
-    } finally {
-      setLoadingAppointment(false);
-    }
+    // No longer needed, handled by useEffect above
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,4 +1,3 @@
-// components/patients/DeleteConfirmModal.tsx
 'use client';
 
 import React from 'react';
@@ -36,7 +35,7 @@ export function DeleteConfirmModal({ patient, onConfirm, onCancel }: DeleteConfi
             <p className="text-sm text-gray-600 mb-3">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-900">{patient.name}</span>?
-              This will <span className="font-semibold">deactivate</span> the patient record, but their medical record will be preserved for audit purposes.
+              This will <span className="font-semibold">deactivate</span> 
             </p>
             <div className="mt-4 rounded-lg bg-yellow-50 p-4">
               <div className="flex items-start">
