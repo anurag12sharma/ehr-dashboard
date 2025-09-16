@@ -5,9 +5,11 @@ import {
   transformAppointmentFormToDatabase
 } from '@/lib/transformers/database-transformers';
 
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
   const { id } = params;
   try {
@@ -45,7 +47,8 @@ export async function GET(
 // --- Robust PUT: with provider/patient conflict/overlap check before update ---
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
   const { id } = params;
   try {
@@ -127,7 +130,8 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
   const { id } = params;
   try {

@@ -25,7 +25,7 @@ export default function PatientsPage() {
       if (result.success) {
         setPatients(result.data);
       }
-    } catch (error) {
+  } catch (_error) {
       // silent
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export default function PatientsPage() {
         setViewMode('list');
         setSelectedPatient(null);
       }
-    } catch (error) {
+  } catch (_error) {
       // silent
     }
   };
@@ -101,7 +101,7 @@ export default function PatientsPage() {
         const result = await response.json();
         return { success: false, error: result.error };
       }
-    } catch (error) {
+  } catch (_error) {
       return { success: false, error: 'An unexpected error occurred' };
     }
   };

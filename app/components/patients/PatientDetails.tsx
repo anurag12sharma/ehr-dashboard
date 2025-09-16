@@ -97,7 +97,7 @@ export function PatientDetails({ patientId, onEdit, onDelete, onBack }: PatientD
   const phone = patient.telecom?.find(t => t.system === 'phone')?.value;
   const email = patient.telecom?.find(t => t.system === 'email')?.value;
   const emergencyContact = patient.contact?.[0];
-  const medicalRecordNumber = patient.identifier?.find(i => i.use === 'official')?.value;
+  // Removed unused medicalRecordNumber variable
 
   return (
     <div className="space-y-8 fade-in">
@@ -161,7 +161,7 @@ export function PatientDetails({ patientId, onEdit, onDelete, onBack }: PatientD
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Medical History</h3>
           {patient?.medicalHistory?.length ? (
             <ul className="list-disc pl-5 space-y-1">
-              {patient.medicalHistory?.map((entry: any, idx: number) => (
+              {patient.medicalHistory?.map((entry, idx) => (
                 <li key={idx}>
                   <span className="font-medium text-gray-800">{entry.condition}</span>
                   {entry.diagnosisDate && (
@@ -183,7 +183,7 @@ export function PatientDetails({ patientId, onEdit, onDelete, onBack }: PatientD
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Allergies</h3>
           {patient?.allergies?.length ? (
             <ul className="list-disc pl-5 space-y-1">
-              {patient.allergies?.map((entry: any, idx: number) => (
+              {patient.allergies?.map((entry, idx) => (
                 <li key={idx}>
                   <span className="font-medium text-gray-800">{entry.substance}</span>
                   {entry.reaction && (

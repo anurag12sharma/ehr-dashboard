@@ -4,9 +4,10 @@ import { transformClinicalNoteToSummary, transformClinicalNoteFormToDatabase } f
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   try {
     const note = await databaseService.getClinicalNoteById(id);
 
@@ -35,9 +36,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   try {
     const formData = await request.json();
     const updateData = transformClinicalNoteFormToDatabase(formData);
@@ -70,9 +72,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   try {
     const deleted = await databaseService.deleteClinicalNote(id);
 

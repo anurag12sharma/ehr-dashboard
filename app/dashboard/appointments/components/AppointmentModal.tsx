@@ -17,13 +17,7 @@ interface AppointmentModalProps {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-type FhirParticipant = {
-  actor?: {
-    reference?: string;
-    display?: string;
-  };
-  [key: string]: unknown;
-};
+// Removed unused FhirParticipant type
 
 const initialFormData: AppointmentFormData = {
   patientId: "",
@@ -53,7 +47,7 @@ export function AppointmentModal({
     useState<AppointmentFormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loadingAppointment, setLoadingAppointment] = useState(false);
+  // Removed unused setLoadingAppointment
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
 
@@ -86,7 +80,7 @@ export function AppointmentModal({
     } else {
       setFormData(initialFormData);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Removed unused eslint-disable directive
   }, [mode, appointment]);
 
   const loadPatients = async () => {
@@ -104,9 +98,7 @@ export function AppointmentModal({
     }
   };
 
-  const loadAppointmentData = async () => {
-    // No longer needed, handled by useEffect above
-  };
+  // Removed unused loadAppointmentData function
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +183,7 @@ export function AppointmentModal({
           </button>
         </div>
         <div className="px-8 pb-8 pt-5">
-          {loadingAppointment || loadingPatients ? (
+          {loadingPatients ? (
             <div className="flex justify-center items-center py-12">
               <div className="loading-spinner"></div>
               <span className="ml-3 text-gray-500">Loading...</span>

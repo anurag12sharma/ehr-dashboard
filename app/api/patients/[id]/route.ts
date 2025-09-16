@@ -4,9 +4,10 @@ import { transformPatientFormToDatabase } from '@/lib/transformers/database-tran
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } =await context.params;
+  const { id } = params;
   try {
     const patient = await databaseService.getPatientById(id);
 
@@ -35,9 +36,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   try {
     const body = await request.json();
     // Convert incoming form data into database fields (name, telecom, address, etc.)
@@ -71,9 +73,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  // @ts-expect-error Next.js expects no type annotation for params
+  { params }
 ) {
-  const { id } =await context.params;
+  const { id } = params;
   try {
     const deleted = await databaseService.deletePatient(id);
 

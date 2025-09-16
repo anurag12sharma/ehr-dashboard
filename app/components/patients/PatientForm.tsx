@@ -252,7 +252,7 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
   const handleRemoveMedication = (idx: number) => {
     setFormData(prev => ({
       ...prev,
-  medications: prev.medications?.filter((_: any, i: number) => i !== idx),
+  medications: prev.medications?.filter((_, i) => i !== idx),
     }));
   };
 
@@ -276,7 +276,7 @@ export function PatientForm({ mode, patientId, onSubmit, onCancel }: PatientForm
   const handleRemoveImmunization = (idx: number) => {
     setFormData(prev => ({
       ...prev,
-  immunizations: prev.immunizations?.filter((_: any, i: number) => i !== idx),
+  immunizations: prev.immunizations?.filter((_, i) => i !== idx),
     }));
   };
 

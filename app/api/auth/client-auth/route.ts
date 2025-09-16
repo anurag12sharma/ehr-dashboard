@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  // const body = await request.json();
   
   // This will be called from the client-side, so it should work
   const encodedParams = new URLSearchParams();

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startdate') ?? searchParams.get('startDate') ?? undefined;
     const endDate = searchParams.get('enddate') ?? searchParams.get('endDate') ?? undefined;
     const patientId = searchParams.get('patientId') ?? undefined;
-    const providerId = searchParams.get('providerId') ?? undefined;
+  // const providerId = searchParams.get('providerId') ?? undefined;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0;
 

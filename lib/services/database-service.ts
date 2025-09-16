@@ -2,7 +2,7 @@ import connectDB from "@/lib/mongodb";
 import { Patient, IPatient } from "@/lib/models/Patient";
 import { Appointment, IAppointment } from "@/lib/models/Appointment";
 import { ClinicalNote, IClinicalNote } from "@/lib/models/ClinicalNote";
-import { PatientSummary, AppointmentSummary } from "@/types/fhir";
+// import { PatientSummary, AppointmentSummary } from "@/types/fhir";
 
 type Participant = {
   actor?: {

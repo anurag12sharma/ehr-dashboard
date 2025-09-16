@@ -50,7 +50,7 @@ export default function AppointmentsPage() {
         setFilteredAppointments(reversed);
       }
     } catch (error) {
-      // silent
+        // silent
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function AppointmentsPage() {
         await loadAppointments();
       }
     } catch {
-      // silent
+        // silent
     }
   };
   const handleModalSubmit = async (data: AppointmentFormData) => {
