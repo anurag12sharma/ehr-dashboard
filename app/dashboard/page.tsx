@@ -145,10 +145,10 @@ export default function DashboardPage() {
             <div className="text-2xl font-semibold text-gray-900">
               {loading ? '...' : stats.totalPatients}
             </div>
-            <div className="flex items-center text-xs text-green-600 mt-1">
+            {/* <div className="flex items-center text-xs text-green-600 mt-1">
               <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
               +12% this month
-            </div>
+            </div> */}
           </div>
         </div>
         {/* [repeat for other stat cards...] */}

@@ -138,8 +138,8 @@ export default function PatientsPage() {
           </div>
         </div>
         <div className="glass-panel card-hover flex items-center border-l-4 border-blue-500">
-          <div className="p-2 rounded-lg bg-blue-100 mr-4">
-            <UserIcon className="h-6 w-6 text-blue-600" />
+          <div className="p-2 rounded-lg bg-purple-100 mr-4">
+            <UserIcon className="h-6 w-6 text-purple-600" />
           </div>
           <div>
             <div className="text-sm text-gray-500">This Month</div>
